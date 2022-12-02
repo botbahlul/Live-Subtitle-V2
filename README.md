@@ -10,3 +10,5 @@ CONS:
 It currently can only listen if you PLAY YOUTUBE STREAM (NOT ALL STREAMS!) via ANDROID VLC PLAYER
 
 For LOCAL VIDEOS on your STORAGE, you need ES MEDIA PLAYER (by installing ES FILE EXPLORER) or FX MEDIA PLAYER (by installing FX FILE MANAGER)
+
+This is modified version of my previous app https://github.com/botbahlul/Live-Subtitle (on the TRANSLATION METHODE) which on this version I use ONLINE Google Translate API

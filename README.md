@@ -1,5 +1,5 @@
 # Live-Subtitle-V2
-ANDROID APP that will recognize VLC LIVE AUDIO/VIDEO STREAMING then TRANSLATE (using unofficial online GOOGLE TRANSLATE API) and display it as LIVE CAPTIONS / LIVE SUBTITLES
+ANDROID APP that will recognize (using free Android Developer Speech Recognition API) VLC LIVE AUDIO/VIDEO STREAMING then TRANSLATE (using unofficial online GOOGLE TRANSLATE API) and display it as LIVE CAPTIONS / LIVE SUBTITLES
 
 This app has PROS & CONS compared to other Speech Recognition APIs like VOSK, IBM WATSON, and PREMIUM GOOGPLE SPEECH API
 

@@ -13,7 +13,6 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.util.DisplayMetrics;
@@ -23,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final Integer RecordAudioRequestCode = 1;
     private DisplayMetrics display;
+    @SuppressLint("StaticFieldLeak")
+    public static CheckBox checkbox_debug_mode;
     private TextView textview_src_dialect;
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_src;
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     //            android:name=".MainActivity"
     //            android:configChanges="keyboardHidden|screenSize|orientation|screenLayout|navigation"
 
+
     @SuppressLint({"ClickableViewAccessibility", "QueryPermissionsNeeded", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
         AudioManager am = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         am.setSpeakerphoneOn(true);
+        checkbox_debug_mode = findViewById(R.id.checkbox_debug_mode);
         spinner_src_languages = findViewById(R.id.spinner_src_languages);
         checkbox_offline_mode = findViewById(R.id.checkbox_offline_mode);
         spinner_dst_languages = findViewById(R.id.spinner_dst_languages);
@@ -130,6 +134,113 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             startActivity(intent);
         }
+
+        if(checkbox_debug_mode.isChecked()){
+            textview_src_dialect.setVisibility(View.VISIBLE);
+            textview_src.setVisibility(View.VISIBLE);
+            textview_dst_dialect.setVisibility(View.VISIBLE);
+            textview_dst.setVisibility(View.VISIBLE);
+            textview_recognizing.setVisibility(View.VISIBLE);
+            textview_overlaying.setVisibility(View.VISIBLE);
+            textview_debug.setVisibility(View.VISIBLE);
+            textview_debug2.setVisibility(View.VISIBLE);
+            if (LANGUAGE.SRC_DIALECT != null) {
+                String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
+                textview_src_dialect.setText(lsd);
+            }
+            else {
+                textview_src_dialect.setHint("LANGUAGE.SRC_DIALECT");
+            }
+
+            if (LANGUAGE.SRC != null) {
+                String ls  = "LANGUAGE.SRC = " + LANGUAGE.SRC;
+                textview_src.setText(ls);
+            }
+            else {
+                textview_src.setHint("LANGUAGE.SRC");
+            }
+
+            if (LANGUAGE.DST_DIALECT != null) {
+                String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
+                textview_dst_dialect.setText(ldd);
+            }
+            else {
+                textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
+            }
+
+            if (LANGUAGE.DST != null) {
+                String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
+                textview_dst.setText(ld);
+            }
+            else {
+                textview_src.setHint("LANGUAGE.SRC");
+            }
+        }
+
+        else {
+            textview_src_dialect.setVisibility(View.GONE);
+            textview_src.setVisibility(View.GONE);
+            textview_dst_dialect.setVisibility(View.GONE);
+            textview_dst.setVisibility(View.GONE);
+            textview_recognizing.setVisibility(View.GONE);
+            textview_overlaying.setVisibility(View.GONE);
+            textview_debug.setVisibility(View.GONE);
+            textview_debug2.setVisibility(View.GONE);
+        }
+
+        checkbox_debug_mode.setOnClickListener(view -> {
+            if(((CompoundButton) view).isChecked()){
+                textview_src_dialect.setVisibility(View.VISIBLE);
+                textview_src.setVisibility(View.VISIBLE);
+                textview_dst_dialect.setVisibility(View.VISIBLE);
+                textview_dst.setVisibility(View.VISIBLE);
+                textview_recognizing.setVisibility(View.VISIBLE);
+                textview_overlaying.setVisibility(View.VISIBLE);
+                textview_debug.setVisibility(View.VISIBLE);
+                textview_debug2.setVisibility(View.VISIBLE);
+                if (LANGUAGE.SRC_DIALECT != null) {
+                    String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
+                    textview_src_dialect.setText(lsd);
+                }
+                else {
+                    textview_src_dialect.setHint("LANGUAGE.SRC_DIALECT");
+                }
+
+                if (LANGUAGE.SRC != null) {
+                    String ls = "LANGUAGE.SRC = " + LANGUAGE.SRC;
+                    textview_src.setText(ls);
+                }
+                else {
+                    textview_src.setHint("LANGUAGE.SRC");
+                }
+
+                if (LANGUAGE.DST_DIALECT != null) {
+                    String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
+                    textview_dst_dialect.setText(ldd);
+                }
+                else {
+                    textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
+                }
+
+                if (LANGUAGE.DST != null) {
+                    String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
+                    textview_dst.setText(ld);
+                }
+                else {
+                    textview_src.setHint("LANGUAGE.SRC");
+                }
+            }
+            else {
+                textview_src_dialect.setVisibility(View.GONE);
+                textview_src.setVisibility(View.GONE);
+                textview_dst_dialect.setVisibility(View.GONE);
+                textview_dst.setVisibility(View.GONE);
+                textview_recognizing.setVisibility(View.GONE);
+                textview_overlaying.setVisibility(View.GONE);
+                textview_debug.setVisibility(View.GONE);
+                textview_debug2.setVisibility(View.GONE);
+            }
+        });
 
         final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
         PackageManager pm = getPackageManager();
@@ -383,55 +494,52 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        button_toggle_overlay.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent e) {
-                if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                    OVERLAYING_STATUS.OVERLAYING = !OVERLAYING_STATUS.OVERLAYING;
-                    String string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                    setText(textview_overlaying, string_overlaying);
-                    checkDrawOverlayPermission();
-                    if (OVERLAYING_STATUS.OVERLAYING) {
-                        start_create_overlay_mic_button();
-                        start_create_overlay_translation_text();
-                    } else {
-                        stop_voice_recognizer();
-                        stop_create_overlay_translation_text();
-                        stop_create_overlay_mic_button();
-                        RECOGNIZING_STATUS.RECOGNIZING = false;
-                        String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                        setText(textview_recognizing, string_recognizing);
-                        string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                        setText(textview_overlaying, string_overlaying);
-                        setText(textview_debug, "");
-                        VOICE_TEXT.STRING = "";
-                        TRANSLATION_TEXT.STRING = "";
-                        setText(voice_text, "");
-                        String hints = "Recognized words";
-                        voice_text.setHint(hints);
-                        audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
-                        if (create_overlay_translation_text.overlay_translation_text != null) {
-                            setText(create_overlay_translation_text.overlay_translation_text, "");
-                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
-                        }
-                        if (create_overlay_mic_button.mic_button != null) {
-                            create_overlay_mic_button.mic_button.setVisibility(View.INVISIBLE);
-                        }
-                        setText(textview_debug, "");
-                        VOICE_TEXT.STRING = "";
-                        TRANSLATION_TEXT.STRING = "";
-                        setText(voice_text, "");
-                        string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                        setText(textview_recognizing, string_recognizing);
-                        string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                        setText(textview_overlaying, string_overlaying);
-                        hints = "Recognized words";
-                        voice_text.setHint(hints);
+        button_toggle_overlay.setOnTouchListener((v, e) -> {
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                OVERLAYING_STATUS.OVERLAYING = !OVERLAYING_STATUS.OVERLAYING;
+                String string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
+                setText(textview_overlaying, string_overlaying1);
+                checkDrawOverlayPermission();
+                if (OVERLAYING_STATUS.OVERLAYING) {
+                    start_create_overlay_mic_button();
+                    start_create_overlay_translation_text();
+                } else {
+                    stop_voice_recognizer();
+                    stop_create_overlay_translation_text();
+                    stop_create_overlay_mic_button();
+                    RECOGNIZING_STATUS.RECOGNIZING = false;
+                    String string_recognizing1 = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
+                    setText(textview_recognizing, string_recognizing1);
+                    string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
+                    setText(textview_overlaying, string_overlaying1);
+                    setText(textview_debug, "");
+                    VOICE_TEXT.STRING = "";
+                    TRANSLATION_TEXT.STRING = "";
+                    setText(voice_text, "");
+                    String hints = "Recognized words";
+                    voice_text.setHint(hints);
+                    audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
+                    if (create_overlay_translation_text.overlay_translation_text != null) {
+                        setText(create_overlay_translation_text.overlay_translation_text, "");
+                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
                     }
+                    if (create_overlay_mic_button.mic_button != null) {
+                        create_overlay_mic_button.mic_button.setVisibility(View.INVISIBLE);
+                    }
+                    setText(textview_debug, "");
+                    VOICE_TEXT.STRING = "";
+                    TRANSLATION_TEXT.STRING = "";
+                    setText(voice_text, "");
+                    string_recognizing1 = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
+                    setText(textview_recognizing, string_recognizing1);
+                    string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
+                    setText(textview_overlaying, string_overlaying1);
+                    hints = "Recognized words";
+                    voice_text.setHint(hints);
                 }
-                return false;
             }
+            return false;
         });
     }
 
@@ -507,14 +615,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setText(final TextView tv, final String text){
-        Handler handler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                // Any UI task, example
-                tv.setText(text);
-            }
-        };
-        handler.sendEmptyMessage(1);
+        new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
     }
 
 }

@@ -10,7 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -39,6 +42,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -115,19 +120,12 @@ public class MainActivity extends AppCompatActivity {
         DISPLAY_METRIC.DISPLAY_HEIGHT = display.heightPixels;
         DISPLAY_METRIC.DISPLAY_DENSITY = d;
 
-        RECOGNIZING_STATUS.RECOGNIZING = false;
-        OVERLAYING_STATUS.OVERLAYING = false;
-        String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-        setText(textview_recognizing, string_recognizing);
-        String string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-        setText(textview_overlaying, string_overlaying);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-            getSupportActionBar().setCustomView(R.layout.actionbar_layout);
-        }
-
-        checkRecordAudioPermission();
+        RECOGNIZING_STATUS.IS_RECOGNIZING = false;
+        OVERLAYING_STATUS.IS_OVERLAYING = false;
+        RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+        setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
 
         NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         if (!notificationManager.isNotificationPolicyAccessGranted()) {
@@ -135,57 +133,33 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
 
-        if(checkbox_debug_mode.isChecked()){
-            textview_src_dialect.setVisibility(View.VISIBLE);
-            textview_src.setVisibility(View.VISIBLE);
-            textview_dst_dialect.setVisibility(View.VISIBLE);
-            textview_dst.setVisibility(View.VISIBLE);
-            textview_recognizing.setVisibility(View.VISIBLE);
-            textview_overlaying.setVisibility(View.VISIBLE);
-            textview_debug.setVisibility(View.VISIBLE);
-            textview_debug2.setVisibility(View.VISIBLE);
-            if (LANGUAGE.SRC_DIALECT != null) {
-                String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
-                textview_src_dialect.setText(lsd);
-            }
-            else {
-                textview_src_dialect.setHint("LANGUAGE.SRC_DIALECT");
-            }
+        int h;
+        if (Objects.equals(LANGUAGE.DST, "ja") || Objects.equals(LANGUAGE.DST, "zh-CN") || Objects.equals(LANGUAGE.DST, "zh-TW")) {
+            h = 75;
+        }
+        else {
+            h = 62;
+        }
+        voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
 
-            if (LANGUAGE.SRC != null) {
-                String ls  = "LANGUAGE.SRC = " + LANGUAGE.SRC;
-                textview_src.setText(ls);
-            }
-            else {
-                textview_src.setHint("LANGUAGE.SRC");
-            }
-
-            if (LANGUAGE.DST_DIALECT != null) {
-                String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
-                textview_dst_dialect.setText(ldd);
-            }
-            else {
-                textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
-            }
-
-            if (LANGUAGE.DST != null) {
-                String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
-                textview_dst.setText(ld);
-            }
-            else {
-                textview_src.setHint("LANGUAGE.SRC");
-            }
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+            getSupportActionBar().setCustomView(R.layout.actionbar_layout);
         }
 
-        else {
-            textview_src_dialect.setVisibility(View.GONE);
-            textview_src.setVisibility(View.GONE);
-            textview_dst_dialect.setVisibility(View.GONE);
-            textview_dst.setVisibility(View.GONE);
-            textview_recognizing.setVisibility(View.GONE);
-            textview_overlaying.setVisibility(View.GONE);
-            textview_debug.setVisibility(View.GONE);
-            textview_debug2.setVisibility(View.GONE);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        }
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q && !Environment.isExternalStorageLegacy()) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Uri uri = Uri.parse("package:" + MainActivity.this.getPackageName());
+                startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, uri));
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            }
         }
 
         checkbox_debug_mode.setOnClickListener(view -> {
@@ -241,6 +215,59 @@ public class MainActivity extends AppCompatActivity {
                 textview_debug2.setVisibility(View.GONE);
             }
         });
+
+        if(checkbox_debug_mode.isChecked()){
+            textview_src_dialect.setVisibility(View.VISIBLE);
+            textview_src.setVisibility(View.VISIBLE);
+            textview_dst_dialect.setVisibility(View.VISIBLE);
+            textview_dst.setVisibility(View.VISIBLE);
+            textview_recognizing.setVisibility(View.VISIBLE);
+            textview_overlaying.setVisibility(View.VISIBLE);
+            textview_debug.setVisibility(View.VISIBLE);
+            textview_debug2.setVisibility(View.VISIBLE);
+            if (LANGUAGE.SRC_DIALECT != null) {
+                String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
+                textview_src_dialect.setText(lsd);
+            }
+            else {
+                textview_src_dialect.setHint("LANGUAGE.SRC_DIALECT");
+            }
+
+            if (LANGUAGE.SRC != null) {
+                String ls  = "LANGUAGE.SRC = " + LANGUAGE.SRC;
+                textview_src.setText(ls);
+            }
+            else {
+                textview_src.setHint("LANGUAGE.SRC");
+            }
+
+            if (LANGUAGE.DST_DIALECT != null) {
+                String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
+                textview_dst_dialect.setText(ldd);
+            }
+            else {
+                textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
+            }
+
+            if (LANGUAGE.DST != null) {
+                String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
+                textview_dst.setText(ld);
+            }
+            else {
+                textview_src.setHint("LANGUAGE.SRC");
+            }
+        }
+
+        else {
+            textview_src_dialect.setVisibility(View.GONE);
+            textview_src.setVisibility(View.GONE);
+            textview_dst_dialect.setVisibility(View.GONE);
+            textview_dst.setVisibility(View.GONE);
+            textview_recognizing.setVisibility(View.GONE);
+            textview_overlaying.setVisibility(View.GONE);
+            textview_debug.setVisibility(View.GONE);
+            textview_debug2.setVisibility(View.GONE);
+        }
 
         final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
         PackageManager pm = getPackageManager();
@@ -329,8 +356,8 @@ public class MainActivity extends AppCompatActivity {
                 stop_voice_recognizer();
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
-                if (OVERLAYING_STATUS.OVERLAYING) {
-                    if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
                     } else {
                         start_voice_recognizer();
@@ -342,10 +369,10 @@ public class MainActivity extends AppCompatActivity {
                     start_create_overlay_translation_text();
                 }
 
-                String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                setText(textview_recognizing, string_recognizing);
-                String string_overlaying =  "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                setText(textview_overlaying, string_overlaying);
+                RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -437,8 +464,8 @@ public class MainActivity extends AppCompatActivity {
                 stop_voice_recognizer();
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
-                if (OVERLAYING_STATUS.OVERLAYING) {
-                    if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
                     } else {
                         start_voice_recognizer();
@@ -449,10 +476,10 @@ public class MainActivity extends AppCompatActivity {
 
                     start_create_overlay_translation_text();
                 }
-                String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                setText(textview_recognizing, string_recognizing);
-                String string_overlaying =  "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                setText(textview_overlaying, string_overlaying);
+                RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -496,22 +523,46 @@ public class MainActivity extends AppCompatActivity {
 
         button_toggle_overlay.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                OVERLAYING_STATUS.OVERLAYING = !OVERLAYING_STATUS.OVERLAYING;
-                String string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                setText(textview_overlaying, string_overlaying1);
+                OVERLAYING_STATUS.IS_OVERLAYING = !OVERLAYING_STATUS.IS_OVERLAYING;
+                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                setText(textview_overlaying, OVERLAYING_STATUS.STRING);
                 checkDrawOverlayPermission();
-                if (OVERLAYING_STATUS.OVERLAYING) {
-                    start_create_overlay_mic_button();
-                    start_create_overlay_translation_text();
+                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                    if (Settings.canDrawOverlays(getApplicationContext())) {
+                        start_create_overlay_mic_button();
+                        start_create_overlay_translation_text();
+                    }
+                    else {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        Runnable runnable = () -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+                        executorService.execute(runnable);
+                        handler.postDelayed(() -> {
+                            if (Settings.canDrawOverlays(getApplicationContext())) {
+                                start_create_overlay_mic_button();
+                                start_create_overlay_translation_text();
+                                OVERLAYING_STATUS.IS_OVERLAYING = true;
+                                String os = "Overlay permission granted";
+                                setText(textview_debug, os);
+                            }
+                            else {
+                                OVERLAYING_STATUS.IS_OVERLAYING = false;
+                                String os = "Failed to get overlay permission in 15 seconds, please retry to tap TOGGLE OVERLAY button again";
+                                setText(textview_debug, os);
+                            }
+                            OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                            setText(textview_overlaying, OVERLAYING_STATUS.STRING);
+                        }, 15000);
+                    }
                 } else {
                     stop_voice_recognizer();
                     stop_create_overlay_translation_text();
                     stop_create_overlay_mic_button();
-                    RECOGNIZING_STATUS.RECOGNIZING = false;
-                    String string_recognizing1 = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                    setText(textview_recognizing, string_recognizing1);
-                    string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                    setText(textview_overlaying, string_overlaying1);
+                    RECOGNIZING_STATUS.IS_RECOGNIZING = false;
+                    RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                    setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+                    OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                    setText(textview_overlaying, OVERLAYING_STATUS.STRING);
                     setText(textview_debug, "");
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
@@ -531,10 +582,10 @@ public class MainActivity extends AppCompatActivity {
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
                     setText(voice_text, "");
-                    string_recognizing1 = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-                    setText(textview_recognizing, string_recognizing1);
-                    string_overlaying1 = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-                    setText(textview_overlaying, string_overlaying1);
+                    RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                    setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+                    OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                    setText(textview_overlaying, OVERLAYING_STATUS.STRING);
                     hints = "Recognized words";
                     voice_text.setHint(hints);
                 }
@@ -616,6 +667,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void setText(final TextView tv, final String text){
         new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
+        //runOnUiThread(() -> tv.setText(text));
     }
 
 }

@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class create_overlay_mic_button extends Service {
@@ -38,12 +39,12 @@ public class create_overlay_mic_button extends Service {
         if (IS_OVER_REMOVEVIEW.IS_OVER) {
             stop_voice_recognizer();
             stop_create_overlay_translation_text();
-            RECOGNIZING_STATUS.RECOGNIZING = false;
-            String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-            MainActivity.textview_recognizing.setText(string_recognizing);
-            OVERLAYING_STATUS.OVERLAYING = false;
-            String string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-            MainActivity.textview_overlaying.setText(string_overlaying);
+            RECOGNIZING_STATUS.IS_RECOGNIZING = false;
+            RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+            MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
+            OVERLAYING_STATUS.IS_OVERLAYING = false;
+            OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+            MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             MainActivity.textview_debug.setText("");
             VOICE_TEXT.STRING = "";
             TRANSLATION_TEXT.STRING = "";
@@ -64,10 +65,10 @@ public class create_overlay_mic_button extends Service {
         VOICE_TEXT.STRING = "";
         TRANSLATION_TEXT.STRING = "";
         MainActivity.voice_text.setText("");
-        String string_recognizing = "recognizing=" + RECOGNIZING_STATUS.RECOGNIZING;
-        MainActivity.textview_recognizing.setText(string_recognizing);
-        String string_overlaying = "overlaying=" + OVERLAYING_STATUS.OVERLAYING;
-        MainActivity.textview_overlaying.setText(string_overlaying);
+        RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+        MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
+        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
         String hints = "Recognized words";
         MainActivity.voice_text.setHint(hints);
     }
@@ -76,7 +77,7 @@ public class create_overlay_mic_button extends Service {
         if (MainActivity.checkbox_offline_mode != null) PREFER_OFFLINE_STATUS.OFFLINE = MainActivity.checkbox_offline_mode.isChecked();
         mGlobalOverlay_mic_button = new GlobalOverlay(this);
         mic_button = new ImageView(this);
-        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
             mic_button.setImageResource(R.drawable.ic_mic_black_off);
         } else {
             mic_button.setImageResource(R.drawable.ic_mic_black_on);
@@ -90,8 +91,12 @@ public class create_overlay_mic_button extends Service {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        RECOGNIZING_STATUS.RECOGNIZING = !RECOGNIZING_STATUS.RECOGNIZING;
-                        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                        RECOGNIZING_STATUS.IS_RECOGNIZING = !RECOGNIZING_STATUS.IS_RECOGNIZING;
+                        RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                        setText(MainActivity.textview_recognizing, RECOGNIZING_STATUS.STRING);
+                        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                        setText(MainActivity.textview_overlaying, OVERLAYING_STATUS.STRING);
+                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             stop_voice_recognizer();
                             mic_button.setImageResource(R.drawable.ic_mic_black_off);
                             VOICE_TEXT.STRING = "";
@@ -144,8 +149,12 @@ public class create_overlay_mic_button extends Service {
         stopService(new Intent(this, create_overlay_translation_text.class));
     }
 
-    private void toast(String message) {
-        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show());
+    public void setText(final TextView tv, final String text){
+        new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
     }
+
+    /*private void toast(String message) {
+        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show());
+    }*/
 
 }

@@ -67,9 +67,9 @@ public class VoiceRecognizer extends Service {
 
             Timer timer = new Timer();
             //if (speechRecognizer != null) speechRecognizer.destroy();
-            String string_recognizing = "RECOGNIZING_STATUS.RECOGNIZING = " + RECOGNIZING_STATUS.RECOGNIZING;
+            String string_recognizing = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
             setText(MainActivity.textview_recognizing, string_recognizing);
-            String string_overlaying = "OVERLAYING_STATUS.OVERLAYING = " + OVERLAYING_STATUS.OVERLAYING;
+            String string_overlaying = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
             setText(MainActivity.textview_overlaying, string_overlaying);
 
             if (SpeechRecognizer.isRecognitionAvailable(this)) {
@@ -116,7 +116,7 @@ public class VoiceRecognizer extends Service {
                     @Override
                     public void onEndOfSpeech() {
                         setText(MainActivity.textview_debug, "onEndOfSpeech");
-                        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             speechRecognizer.stopListening();
                         } else {
                             speechRecognizer.startListening(speechRecognizerIntent);
@@ -126,22 +126,28 @@ public class VoiceRecognizer extends Service {
                     @Override
                     public void onError(int errorCode) {
                         setText(MainActivity.textview_debug, "onError");
-                        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             speechRecognizer.stopListening();
                         } else {
-                            //if (Objects.equals(getErrorText(errorCode), "RecognitionService busy")) {
+                            if (Objects.equals(getErrorText(errorCode), "RecognitionService busy")) {
                                 //speechRecognizer.stopListening();
-                                //speechRecognizer.startListening(speechRecognizerIntent);
-                            //}
+                                setText(MainActivity.textview_debug2, "");
+                            }
+                            else if (Objects.equals(getErrorText(errorCode), "Insufficient permissions")) {
+                                String msg = "Please give RECORD AUDIO PERMISSION (USE MICROPHONE PERMISSION) to GOOGLE APP";
+                                setText(MainActivity.textview_debug, msg);
+                            }
+                            else {
+                                setText(MainActivity.textview_debug2, getErrorText(errorCode));
+                            }
                             speechRecognizer.startListening(speechRecognizerIntent);
-                            setText(MainActivity.textview_debug2, getErrorText(errorCode));
                         }
                     }
 
                     @Override
                     public void onResults(Bundle results) {
                         /*setText(MainActivity.textview_debug, "onResults");
-                        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             speechRecognizer.stopListening();
                         } else {
                             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -154,7 +160,7 @@ public class VoiceRecognizer extends Service {
 
                     @Override
                     public void onPartialResults(Bundle results) {
-                        if (!RECOGNIZING_STATUS.RECOGNIZING) {
+                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             speechRecognizer.stopListening();
                         } else {
                             ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -216,7 +222,7 @@ public class VoiceRecognizer extends Service {
                 });
             }
 
-            if (RECOGNIZING_STATUS.RECOGNIZING) {
+            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                 speechRecognizer.startListening(speechRecognizerIntent);
                 timer.schedule(new TimerTask() {
                     @Override
@@ -248,7 +254,7 @@ public class VoiceRecognizer extends Service {
             @Override
             public void onCompleted(String translation) {
                 TRANSLATION_TEXT.STRING = translation;
-                if (RECOGNIZING_STATUS.RECOGNIZING) {
+                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                     if (TRANSLATION_TEXT.STRING.length() == 0) {
                         create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                         create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
@@ -295,7 +301,7 @@ public class VoiceRecognizer extends Service {
 
             @Override
             public void onCompleted(String translation) {
-                if (RECOGNIZING_STATUS.RECOGNIZING) {
+                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                     if (TRANSLATION_TEXT.STRING.length() == 0) {
                         create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                         create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
@@ -355,7 +361,7 @@ public class VoiceRecognizer extends Service {
             throw new RuntimeException(e);
         }
         String finalSENTENCE = SENTENCE;
-        if (RECOGNIZING_STATUS.RECOGNIZING && finalSENTENCE != null) {
+        if (RECOGNIZING_STATUS.IS_RECOGNIZING && finalSENTENCE != null) {
             executor.execute(() -> {
                 try {
                     String url = "https://translate.googleapis.com/translate_a/";
@@ -387,7 +393,7 @@ public class VoiceRecognizer extends Service {
 
                 handler.post(() -> {
                     TRANSLATION_TEXT.STRING = TRANSLATION.toString();
-                    if (RECOGNIZING_STATUS.RECOGNIZING) {
+                    if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (TRANSLATION_TEXT.STRING.length() == 0) {
                             create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                             create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
@@ -437,7 +443,7 @@ public class VoiceRecognizer extends Service {
             throw new RuntimeException(e);
         }
         String finalSENTENCE = SENTENCE;
-        if (RECOGNIZING_STATUS.RECOGNIZING && finalSENTENCE != null) {
+        if (RECOGNIZING_STATUS.IS_RECOGNIZING && finalSENTENCE != null) {
             executor.execute(() -> {
                 try {
                     String url = "https://translate.googleapis.com/translate_a/";
@@ -463,7 +469,7 @@ public class VoiceRecognizer extends Service {
 
                 handler.post(() -> {
                     TRANSLATION_TEXT.STRING = TRANSLATION.toString();
-                    if (RECOGNIZING_STATUS.RECOGNIZING) {
+                    if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (TRANSLATION_TEXT.STRING.length() == 0) {
                             create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                             create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);

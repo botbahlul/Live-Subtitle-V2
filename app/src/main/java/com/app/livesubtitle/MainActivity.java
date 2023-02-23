@@ -526,7 +526,6 @@ public class MainActivity extends AppCompatActivity {
                 OVERLAYING_STATUS.IS_OVERLAYING = !OVERLAYING_STATUS.IS_OVERLAYING;
                 OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
                 setText(textview_overlaying, OVERLAYING_STATUS.STRING);
-                checkDrawOverlayPermission();
                 if (OVERLAYING_STATUS.IS_OVERLAYING) {
                     if (Settings.canDrawOverlays(getApplicationContext())) {
                         start_create_overlay_mic_button();

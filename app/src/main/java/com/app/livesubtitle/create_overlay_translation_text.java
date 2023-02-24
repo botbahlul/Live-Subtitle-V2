@@ -34,7 +34,7 @@ public class create_overlay_translation_text extends Service {
         super.onCreate();
         create_translation_text_window();
         /*if (TRANSLATION_TEXT.STRING.length() != 0) {
-            overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
+            setText(overlay_translation_text, TRANSLATION_TEXT.STRING);
         }*/
     }
 

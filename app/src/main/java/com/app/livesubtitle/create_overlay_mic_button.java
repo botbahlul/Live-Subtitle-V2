@@ -53,7 +53,7 @@ public class create_overlay_mic_button extends Service {
             MainActivity.voice_text.setHint(hints);
             MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(MainActivity.audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
             if (create_overlay_translation_text.overlay_translation_text != null) {
-                create_overlay_translation_text.overlay_translation_text.setText("");
+                setText(create_overlay_translation_text.overlay_translation_text, "");
                 create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                 create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
             }
@@ -93,15 +93,17 @@ public class create_overlay_mic_button extends Service {
                     public void onClick(View v) {
                         RECOGNIZING_STATUS.IS_RECOGNIZING = !RECOGNIZING_STATUS.IS_RECOGNIZING;
                         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
-                        setText(MainActivity.textview_recognizing, RECOGNIZING_STATUS.STRING);
+                        MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
                         OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                        setText(MainActivity.textview_overlaying, OVERLAYING_STATUS.STRING);
+                        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                        MainActivity.textview_debug.setText("");
+                        MainActivity.textview_output_messages.setText("");
                         if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             stop_voice_recognizer();
                             mic_button.setImageResource(R.drawable.ic_mic_black_off);
                             VOICE_TEXT.STRING = "";
                             TRANSLATION_TEXT.STRING = "";
-                            create_overlay_translation_text.overlay_translation_text.setText("");
+                            setText(create_overlay_translation_text.overlay_translation_text, "");
                             create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
                             create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
                             MainActivity.voice_text.setText("");

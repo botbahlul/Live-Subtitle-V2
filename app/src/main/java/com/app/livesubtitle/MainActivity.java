@@ -47,29 +47,19 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final Integer RecordAudioRequestCode = 1;
-    private DisplayMetrics display;
-    @SuppressLint("StaticFieldLeak")
-    public static CheckBox checkbox_debug_mode;
+    private CheckBox checkbox_debug_mode;
+    private Spinner spinner_src_languages;
     private TextView textview_src_dialect;
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_src;
+    private Spinner spinner_dst_languages;
     private TextView textview_dst_dialect;
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_dst;
-    private ArrayList<String> arraylist_languages;
-    private String [] countries;
-    private String [] dialects;
-    private Map<String, String> countries_dialects;
-    private Spinner spinner_src_languages;
-    private Spinner spinner_dst_languages;
     @SuppressLint("StaticFieldLeak")
     public static CheckBox checkbox_offline_mode;
     @SuppressLint("StaticFieldLeak")
     public static EditText voice_text;
-    @SuppressLint("StaticFieldLeak")
-    public static AudioManager audio;
-    public static int mStreamVolume;
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_recognizing;
     @SuppressLint("StaticFieldLeak")
@@ -77,7 +67,16 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_debug;
     @SuppressLint("StaticFieldLeak")
-    public static TextView textview_debug2;
+    public static TextView textview_output_messages;
+
+    private ArrayList<String> arraylist_languages;
+    private String [] countries;
+    private String [] dialects;
+    private Map<String, String> countries_dialects;
+    private DisplayMetrics display;
+    @SuppressLint("StaticFieldLeak")
+    public static AudioManager audio;
+    public static int mStreamVolume;
 
     //DON'T FORGET TO MODIFY AndroidManifest.xml
     //         <activity
@@ -90,9 +89,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
-        AudioManager am = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        am.setSpeakerphoneOn(true);
         checkbox_debug_mode = findViewById(R.id.checkbox_debug_mode);
         spinner_src_languages = findViewById(R.id.spinner_src_languages);
         checkbox_offline_mode = findViewById(R.id.checkbox_offline_mode);
@@ -106,12 +102,16 @@ public class MainActivity extends AppCompatActivity {
         textview_recognizing = findViewById(R.id.textview_recognizing);
         textview_overlaying = findViewById(R.id.textview_overlaying);
         textview_debug = findViewById(R.id.textview_debug);
-        textview_debug2 = findViewById(R.id.textview_debug2);
+        textview_output_messages = findViewById(R.id.textview_output_messages);
+
         VOICE_TEXT.STRING = "";
         TRANSLATION_TEXT.STRING = "";
         PREFER_OFFLINE_STATUS.OFFLINE = checkbox_offline_mode.isChecked();
-        audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
+        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
+        audio.setSpeakerphoneOn(true);
 
         display = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(display);
@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
         setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
         OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+        textview_overlaying.setText(OVERLAYING_STATUS.STRING);
 
         NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         if (!notificationManager.isNotificationPolicyAccessGranted()) {
@@ -171,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
                 textview_recognizing.setVisibility(View.VISIBLE);
                 textview_overlaying.setVisibility(View.VISIBLE);
                 textview_debug.setVisibility(View.VISIBLE);
-                textview_debug2.setVisibility(View.VISIBLE);
                 if (LANGUAGE.SRC_DIALECT != null) {
                     String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
                     textview_src_dialect.setText(lsd);
@@ -212,7 +211,6 @@ public class MainActivity extends AppCompatActivity {
                 textview_recognizing.setVisibility(View.GONE);
                 textview_overlaying.setVisibility(View.GONE);
                 textview_debug.setVisibility(View.GONE);
-                textview_debug2.setVisibility(View.GONE);
             }
         });
 
@@ -224,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
             textview_recognizing.setVisibility(View.VISIBLE);
             textview_overlaying.setVisibility(View.VISIBLE);
             textview_debug.setVisibility(View.VISIBLE);
-            textview_debug2.setVisibility(View.VISIBLE);
             if (LANGUAGE.SRC_DIALECT != null) {
                 String lsd = "LANGUAGE.SRC_DIALECT = " + LANGUAGE.SRC_DIALECT;
                 textview_src_dialect.setText(lsd);
@@ -266,7 +263,6 @@ public class MainActivity extends AppCompatActivity {
             textview_recognizing.setVisibility(View.GONE);
             textview_overlaying.setVisibility(View.GONE);
             textview_debug.setVisibility(View.GONE);
-            textview_debug2.setVisibility(View.GONE);
         }
 
         final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
@@ -372,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
                 RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                 setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
                 OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -479,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
                 RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                 setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
                 OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -542,12 +538,12 @@ public class MainActivity extends AppCompatActivity {
                                 start_create_overlay_translation_text();
                                 OVERLAYING_STATUS.IS_OVERLAYING = true;
                                 String os = "Overlay permission granted";
-                                setText(textview_debug, os);
+                                setText(textview_output_messages, os);
                             }
                             else {
                                 OVERLAYING_STATUS.IS_OVERLAYING = false;
-                                String os = "Failed to get overlay permission in 15 seconds, please retry to tap TOGGLE OVERLAY button again";
-                                setText(textview_debug, os);
+                                String os = "Please retry to tap TOGGLE OVERLAY button again";
+                                setText(textview_output_messages, os);
                             }
                             OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
                             setText(textview_overlaying, OVERLAYING_STATUS.STRING);
@@ -562,7 +558,7 @@ public class MainActivity extends AppCompatActivity {
                     setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
                     OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
                     setText(textview_overlaying, OVERLAYING_STATUS.STRING);
-                    setText(textview_debug, "");
+                    setText(textview_output_messages, "");
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
                     setText(voice_text, "");
@@ -577,7 +573,7 @@ public class MainActivity extends AppCompatActivity {
                     if (create_overlay_mic_button.mic_button != null) {
                         create_overlay_mic_button.mic_button.setVisibility(View.INVISIBLE);
                     }
-                    setText(textview_debug, "");
+                    setText(textview_output_messages, "");
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
                     setText(voice_text, "");
@@ -594,8 +590,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        stop_create_overlay_translation_text();
+        stop_create_overlay_mic_button();
+        stop_voice_recognizer();
+        audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, mStreamVolume, AudioManager.ADJUST_SAME);
+        finish();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        stop_create_overlay_translation_text();
+        stop_create_overlay_mic_button();
+        stop_voice_recognizer();
+        audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, mStreamVolume, AudioManager.ADJUST_SAME);
     }
 
     public void setup_spinner(ArrayList<String> supported_languages)
@@ -615,18 +625,18 @@ public class MainActivity extends AppCompatActivity {
         spinner_dst_languages.setSelection(supported_languages.indexOf("English (United States)"));
     }
 
-    private void checkRecordAudioPermission() {
+    /*private void checkRecordAudioPermission() {
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, RecordAudioRequestCode);
         }
-    }
+    }*/
 
-    private void checkDrawOverlayPermission() {
+    /*private void checkDrawOverlayPermission() {
         if (!Settings.canDrawOverlays(this)) {
             Intent myIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
             startActivity(myIntent);
         }
-    }
+    }*/
 
     private void start_create_overlay_mic_button() {
         Intent i = new Intent(this, create_overlay_mic_button.class);

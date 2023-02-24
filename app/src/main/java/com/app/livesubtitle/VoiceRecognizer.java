@@ -51,198 +51,203 @@ public class VoiceRecognizer extends Service {
 
     private SpeechRecognizer speechRecognizer = null;
     public static Intent speechRecognizerIntent;
+    private Timer timer;
+    private TimerTask timerTask;
 
     @Override
     public void onCreate() {
         super.onCreate();
-            int h;
-            if (Objects.equals(LANGUAGE.SRC, "ja") || Objects.equals(LANGUAGE.SRC, "zh-Hans") || Objects.equals(LANGUAGE.SRC, "zh-Hant")) {
-                h = 122;
-            } else {
-                h = 109;
-            }
-            MainActivity.voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
+        int h;
+        if (Objects.equals(LANGUAGE.SRC, "ja") || Objects.equals(LANGUAGE.SRC, "zh-Hans") || Objects.equals(LANGUAGE.SRC, "zh-Hant")) {
+            h = 122;
+        } else {
+            h = 109;
+        }
+        MainActivity.voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
 
-            String src_dialect = LANGUAGE.SRC_DIALECT;
+        String src_dialect = LANGUAGE.SRC_DIALECT;
+        if (speechRecognizer != null) speechRecognizer.destroy();
+        RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+        MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
+        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
 
-            Timer timer = new Timer();
-            //if (speechRecognizer != null) speechRecognizer.destroy();
-            String string_recognizing = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
-            setText(MainActivity.textview_recognizing, string_recognizing);
-            String string_overlaying = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-            setText(MainActivity.textview_overlaying, string_overlaying);
+        if (SpeechRecognizer.isRecognitionAvailable(this)) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
 
-            if (SpeechRecognizer.isRecognitionAvailable(this)) {
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-                speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, Objects.requireNonNull(getClass().getPackage()).getName());
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+            //speechRecognizerIntent.putExtra("android.speech.extra.HIDE_PARTIAL_TRAILING_PUNCTUATION", true);
+            //speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
+            //speechRecognizerIntent.putExtra("android.speech.extra.AUDIO_SOURCE",true);
+            //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO",true);
+            //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO_FORMAT", AudioFormat.ENCODING_PCM_8BIT);
+            //speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", true);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, src_dialect);
+            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,3600000);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "com.google.android.googlequicksearchbox");
+            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true);
 
-                //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, Objects.requireNonNull(getClass().getPackage()).getName());
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-                //speechRecognizerIntent.putExtra("android.speech.extra.HIDE_PARTIAL_TRAILING_PUNCTUATION", true);
-                //speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
-                //speechRecognizerIntent.putExtra("android.speech.extra.AUDIO_SOURCE",true);
-                //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO",true);
-                //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO_FORMAT", AudioFormat.ENCODING_PCM_8BIT);
-                //speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", true);
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, src_dialect);
-                //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,3600000);
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
-                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "com.google.android.googlequicksearchbox");
-                //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true);
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle arg0) {
+                    setText(MainActivity.textview_debug, "onReadyForSpeech");
+                }
 
-                speechRecognizer.setRecognitionListener(new RecognitionListener() {
-                    @Override
-                    public void onReadyForSpeech(Bundle arg0) {
-                        setText(MainActivity.textview_debug, "onReadyForSpeech");
+                @Override
+                public void onBeginningOfSpeech() {
+                    setText(MainActivity.textview_debug, "onBeginningOfSpeech");
+                }
+
+                @Override
+                public void onRmsChanged(float rmsdB) {
+                    //setText(MainActivity.textview_debug, "onRmsChanged: " + rmsdB);
+                }
+
+                @Override
+                public void onBufferReceived(byte[] buffer) {
+                    setText(MainActivity.textview_debug, "onBufferReceived: " + Arrays.toString(buffer));
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+                    setText(MainActivity.textview_debug, "onEndOfSpeech");
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        speechRecognizer.stopListening();
+                    } else {
+                        speechRecognizer.startListening(speechRecognizerIntent);
                     }
+                }
 
-                    @Override
-                    public void onBeginningOfSpeech() {
-                        setText(MainActivity.textview_debug, "onBeginningOfSpeech");
-                    }
-
-                    @Override
-                    public void onRmsChanged(float rmsdB) {
-                        //setText(MainActivity.textview_debug, "onRmsChanged: " + rmsdB);
-                    }
-
-                    @Override
-                    public void onBufferReceived(byte[] buffer) {
-                        setText(MainActivity.textview_debug, "onBufferReceived: " + Arrays.toString(buffer));
-                    }
-
-                    @Override
-                    public void onEndOfSpeech() {
-                        setText(MainActivity.textview_debug, "onEndOfSpeech");
-                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                            speechRecognizer.stopListening();
-                        } else {
-                            speechRecognizer.startListening(speechRecognizerIntent);
+                @Override
+                public void onError(int errorCode) {
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        speechRecognizer.stopListening();
+                    } else {
+                        if (Objects.equals(getErrorText(errorCode), "Insufficient permissions")) {
+                            setText(MainActivity.textview_output_messages, "Please give RECORD AUDIO PERMISSION (USE MICROPHONE PERMISSION) to GOOGLE APP");
                         }
-                    }
-
-                    @Override
-                    public void onError(int errorCode) {
-                        setText(MainActivity.textview_debug, "onError");
-                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                            speechRecognizer.stopListening();
-                        } else {
-                            if (Objects.equals(getErrorText(errorCode), "RecognitionService busy")) {
-                                //speechRecognizer.stopListening();
-                                setText(MainActivity.textview_debug2, "");
-                            }
-                            else if (Objects.equals(getErrorText(errorCode), "Insufficient permissions")) {
-                                String msg = "Please give RECORD AUDIO PERMISSION (USE MICROPHONE PERMISSION) to GOOGLE APP";
-                                setText(MainActivity.textview_debug, msg);
-                            }
-                            else {
-                                setText(MainActivity.textview_debug2, getErrorText(errorCode));
-                            }
-                            speechRecognizer.startListening(speechRecognizerIntent);
+                        else {
+                            setText(MainActivity.textview_debug, "onError : " + getErrorText(errorCode));
                         }
+                        speechRecognizer.startListening(speechRecognizerIntent);
                     }
+                }
 
-                    @Override
-                    public void onResults(Bundle results) {
-                        /*setText(MainActivity.textview_debug, "onResults");
+                @Override
+                public void onResults(Bundle results) {
+                        /*setText(MainActivity.textview_output_messages, "onResults");
                         if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                             speechRecognizer.stopListening();
                         } else {
                             ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                             VOICE_TEXT.STRING = matches.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
-                            setText(MainActivity.voice_text, VOICE_TEXT.STRING);
+                            MainActivity.voice_text.setText(VOICE_TEXT.STRING);
                             MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
                             speechRecognizer.startListening(speechRecognizerIntent);
                         }*/
-                    }
+                }
 
-                    @Override
-                    public void onPartialResults(Bundle results) {
-                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                            speechRecognizer.stopListening();
+                @Override
+                public void onPartialResults(Bundle results) {
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        speechRecognizer.stopListening();
+                    } else {
+                        ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                        if (PREFER_OFFLINE_STATUS.OFFLINE) {
+                            ArrayList<String> unstableData = results.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
+                            VOICE_TEXT.STRING = data.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC)) + unstableData.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
                         } else {
-                            ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                            if (PREFER_OFFLINE_STATUS.OFFLINE) {
-                                ArrayList<String> unstableData = results.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
-                                VOICE_TEXT.STRING = data.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC)) + unstableData.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
-                            } else {
-                                StringBuilder text = new StringBuilder();
-                                for (String result : data)
-                                    text.append(result);
-                                VOICE_TEXT.STRING = text.toString().toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
-                            }
-                            MainActivity.voice_text.setText(VOICE_TEXT.STRING);
-                            MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
+                            StringBuilder text = new StringBuilder();
+                            for (String result : data)
+                                text.append(result);
+                            VOICE_TEXT.STRING = text.toString().toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
                         }
+                        MainActivity.voice_text.setText(VOICE_TEXT.STRING);
+                        MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
                     }
+                }
 
-                    @Override
-                    public void onEvent(int arg0, Bundle arg1) {
-                        setText(MainActivity.textview_debug, "onEvent");
-                    }
+                @Override
+                public void onEvent(int arg0, Bundle arg1) {
+                    setText(MainActivity.textview_output_messages, "onEvent");
+                }
 
-                    public String getErrorText(int errorCode) {
-                        String message;
-                        switch (errorCode) {
-                            case SpeechRecognizer.ERROR_AUDIO:
-                                message = "Audio recording error";
-                                break;
-                            case SpeechRecognizer.ERROR_CLIENT:
-                                message = "Client side error";
-                                break;
-                            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                                message = "Insufficient permissions";
-                                break;
-                            case SpeechRecognizer.ERROR_NETWORK:
-                                message = "Network error";
-                                break;
-                            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                                message = "Network timeout";
-                                break;
-                            case SpeechRecognizer.ERROR_NO_MATCH:
-                                message = "No match";
-                                break;
-                            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                                message = "RecognitionService busy";
-                                break;
-                            case SpeechRecognizer.ERROR_SERVER:
-                                message = "error from server";
-                                break;
-                            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                                message = "No speechRecognizer input";
-                                break;
-                            default:
-                                message = "Didn't understand, please try again.";
-                                break;
-                        }
-                        return message;
+                public String getErrorText(int errorCode) {
+                    String message;
+                    switch (errorCode) {
+                        case SpeechRecognizer.ERROR_AUDIO:
+                            message = "Audio recording error";
+                            break;
+                        case SpeechRecognizer.ERROR_CLIENT:
+                            message = "Client side error";
+                            break;
+                        case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                            message = "Insufficient permissions";
+                            break;
+                        case SpeechRecognizer.ERROR_NETWORK:
+                            message = "Network error";
+                            break;
+                        case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                            message = "Network timeout";
+                            break;
+                        case SpeechRecognizer.ERROR_NO_MATCH:
+                            message = "No match";
+                            break;
+                        case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                            message = "RecognitionService busy";
+                            break;
+                        case SpeechRecognizer.ERROR_SERVER:
+                            message = "error from server";
+                            break;
+                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                            message = "No speechRecognizer input";
+                            break;
+                        default:
+                            message = "Didn't understand, please try again.";
+                            break;
                     }
-                });
+                    return message;
+                }
+            });
+        }
+
+        if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
+            speechRecognizer.startListening(speechRecognizerIntent);
+            timer = new Timer();
+            timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    if (VOICE_TEXT.STRING != null) {
+                        //translate(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
+                        GoogleTranslate2(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
+                    }
+                }
+            };
+            timer.schedule(timerTask,0,1000);
+        } else {
+            speechRecognizer.stopListening();
+            if (timerTask != null) timerTask.cancel();
+            if (timer != null) {
+                timer.cancel();
+                timer.purge();
             }
-
-            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                speechRecognizer.startListening(speechRecognizerIntent);
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        if (VOICE_TEXT.STRING != null) {
-                            //translate(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
-                            GoogleTranslate2(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
-                        }
-                    }
-                }, 0, 1000);
-            } else {
-                speechRecognizer.stopListening();
-                stopSelf();
-            }
+            stopSelf();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (speechRecognizer != null) speechRecognizer.destroy();
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+        }
     }
 
     /*public void translate(String t, String src, String dst) {
@@ -287,7 +292,7 @@ public class VoiceRecognizer extends Service {
             @Override
             public void onError(Exception e) {
                 //Toast.makeText(MainActivity.this, "Unknown error", Toast.LENGTH_SHORT).show();
-                setText(MainActivity.textview_debug, e.getMessage());
+                setText(MainActivity.textview_output_messages, e.getMessage());
             }
         });
         translate.execute(t, src, dst);
@@ -336,7 +341,7 @@ public class VoiceRecognizer extends Service {
             @Override
             public void onError(Exception e) {
                 //toast("Unknown error");
-                //setText(textview_debug, e.getMessage());
+                //setText(textview_output_messages, e.getMessage());
             }
         });
         translate.execute(t, src, dst);
@@ -347,8 +352,7 @@ public class VoiceRecognizer extends Service {
     }*/
 
     public void setText(final TextView tv, final String text){
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(() -> tv.setText(text));
+        new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
     }
 
     private String GoogleTranslate(String SENTENCE, String SRC, String DST) {

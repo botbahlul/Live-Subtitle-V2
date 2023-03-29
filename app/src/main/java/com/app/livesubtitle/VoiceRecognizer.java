@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
@@ -223,12 +224,14 @@ public class VoiceRecognizer extends Service {
                 @Override
                 public void run() {
                     if (VOICE_TEXT.STRING != null) {
-                        //translate(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
-                        GoogleTranslate2(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
+                        if (!Objects.equals(VOICE_TEXT.STRING, "")) {
+                            //translate(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
+                            GoogleTranslate(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
+                        }
                     }
                 }
             };
-            timer.schedule(timerTask,0,1000);
+            timer.schedule(timerTask,0,2000);
         } else {
             speechRecognizer.stopListening();
             if (timerTask != null) timerTask.cancel();
@@ -367,32 +370,42 @@ public class VoiceRecognizer extends Service {
         String finalSENTENCE = SENTENCE;
         if (RECOGNIZING_STATUS.IS_RECOGNIZING && finalSENTENCE != null) {
             executor.execute(() -> {
+                HttpClient httpClient;
                 try {
                     String url = "https://translate.googleapis.com/translate_a/";
                     String params = "single?client=gtx&sl=" + SRC + "&tl=" + DST + "&dt=t&q=" + finalSENTENCE;
-                    HttpResponse response = new DefaultHttpClient().execute(new HttpGet(url + params));
+                    httpClient = new DefaultHttpClient();
+                    HttpResponse response = httpClient.execute(new HttpGet(url + params));
+                    ByteArrayOutputStream byteArrayOutputStream;
                     StatusLine statusLine = response.getStatusLine();
+                    JSONArray jsonArray;
                     if (statusLine.getStatusCode() == 200) {
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        byteArrayOutputStream = new ByteArrayOutputStream();
                         response.getEntity().writeTo(byteArrayOutputStream);
-                        String stringOfByteArrayOutputStream = Objects.requireNonNull(byteArrayOutputStream).toString();
-                        byteArrayOutputStream.close();
-                        //JSONArray jSONArray = null;
-                        //if (new JSONArray(stringOfByteArrayOutputStream).getJSONArray(0) != null) {
-                        //JSONArray jsonArray = new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0);
-                        //}
-                        for (int i = 0; i < Objects.requireNonNull(new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0)).length(); i++) {
-                            //JSONArray jsonArray2 = new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0).getJSONArray(i);
-                            TRANSLATION.set(TRANSLATION + new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0).getJSONArray(i).get(0).toString());
+                        String stringOfByteArrayOutputStream = byteArrayOutputStream.toString();
+                        try {
+                            jsonArray = new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0);
+                            //Log.d("GoogleTranslate2", "jsonArray = " + jsonArray);
+                            int length = jsonArray.length();
+                            for (int i = 0; i < length; i++) {
+                                TRANSLATION.set(TRANSLATION + new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0).getJSONArray(i).get(0).toString());
+                            }
+                        }
+                        catch(Exception e) {
+                            Log.e("GoogleTranslate2", e.getMessage());
+                            e.printStackTrace();
                         }
                     } else {
                         response.getEntity().getContent().close();
+                        httpClient.getConnectionManager().shutdown();
                         throw new IOException(statusLine.getReasonPhrase());
                     }
-                } catch (Exception e) {
-                    Log.e("GoogleTranslator", e.getMessage());
+                    byteArrayOutputStream.close();
+                }
+
+                catch (Exception e) {
+                    Log.e("GoogleTranslate", e.getMessage());
                     e.printStackTrace();
-                    System.out.println();
                 }
 
                 handler.post(() -> {
@@ -435,81 +448,5 @@ public class VoiceRecognizer extends Service {
         }
         return TRANSLATION.toString();
     }
-
-
-    private void GoogleTranslate2(String SENTENCE, String SRC, String DST) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-        AtomicReference<String> TRANSLATION = new AtomicReference<>("");
-        try {
-            SENTENCE = URLEncoder.encode(SENTENCE, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-        String finalSENTENCE = SENTENCE;
-        if (RECOGNIZING_STATUS.IS_RECOGNIZING && finalSENTENCE != null) {
-            executor.execute(() -> {
-                try {
-                    String url = "https://translate.googleapis.com/translate_a/";
-                    String params = "single?client=gtx&sl=" + SRC + "&tl=" + DST + "&dt=t&q=" + finalSENTENCE;
-                    HttpResponse response = new DefaultHttpClient().execute(new HttpGet(url + params));
-                    StatusLine statusLine = response.getStatusLine();
-                    if (statusLine.getStatusCode() == 200) {
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        response.getEntity().writeTo(byteArrayOutputStream);
-                        String stringOfByteArrayOutputStream = byteArrayOutputStream.toString();
-                        byteArrayOutputStream.close();
-                        for (int i = 0; i < Objects.requireNonNull(new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0)).length(); i++) {
-                            TRANSLATION.set(TRANSLATION + new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0).getJSONArray(i).get(0).toString());
-                        }
-                    } else {
-                        response.getEntity().getContent().close();
-                        throw new IOException(statusLine.getReasonPhrase());
-                    }
-                } catch (Exception e) {
-                    //Log.e("GoogleTranslator", e.getMessage());
-                    //e.printStackTrace();
-                }
-
-                handler.post(() -> {
-                    TRANSLATION_TEXT.STRING = TRANSLATION.toString();
-                    if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        if (TRANSLATION_TEXT.STRING.length() == 0) {
-                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
-                            executor.shutdown();
-                        } else {
-                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.TRANSPARENT);
-                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
-                            create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
-                            create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
-                            create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
-                            Spannable spannableString = new SpannableStringBuilder(TRANSLATION_TEXT.STRING);
-                            spannableString.setSpan(new ForegroundColorSpan(Color.YELLOW),
-                                    0,
-                                    create_overlay_translation_text.overlay_translation_text.getSelectionEnd(),
-                                    0);
-                            spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")),
-                                    0,
-                                    create_overlay_translation_text.overlay_translation_text.getSelectionEnd(),
-                                    0);
-                            create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                            create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
-                        }
-                    } else {
-                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
-                    }
-                });
-
-            });
-        }
-        else {
-            executor.shutdown();
-        }
-    }
-
 
 }

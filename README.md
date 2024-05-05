@@ -72,3 +72,5 @@ For LOCAL VIDEOS on your STORAGE, you need ES MEDIA PLAYER (by installing ES FIL
 This is modified version of my previous app https://github.com/botbahlul/Live-Subtitle (on the TRANSLATION METHODE) which on this version I use ONLINE Google Translate API
 
 Check my other SPEECH RECOGNITIION + TRANSLATE PROJECTS https://github.com/botbahlul?tab=repositories
+
+Buy me coffee : https://sociabuzz.com/botbahlul/tribe

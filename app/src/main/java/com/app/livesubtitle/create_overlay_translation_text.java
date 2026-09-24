@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -33,6 +34,11 @@ public class create_overlay_translation_text extends Service {
 
     public void onCreate() {
         super.onCreate();
+        Log.d(
+                "create_overlay_translation_text",
+                "Starting create_overlay_translation_text service"
+        );
+
         create_translation_text_window();
         /*if (TRANSLATION_TEXT.STRING.length() != 0) {
             setText(overlay_translation_text, TRANSLATION_TEXT.STRING);
@@ -45,6 +51,11 @@ public class create_overlay_translation_text extends Service {
         if (overlay_translation_text != null) {
             mGlobalOverlay_overlay_translation_text.removeOverlayView(overlay_translation_text);
         }
+        Log.d(
+                "create_overlay_translation_text",
+                "Stopping create_overlay_translation_text service"
+        );
+
     }
 
     @SuppressLint("InflateParams")

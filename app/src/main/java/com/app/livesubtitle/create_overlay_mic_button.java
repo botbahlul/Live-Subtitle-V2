@@ -8,6 +8,7 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -71,9 +72,18 @@ public class create_overlay_mic_button extends Service {
         MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
         String hints = "Recognized words";
         MainActivity.voice_text.setHint(hints);
+        Log.d(
+                "create_overlay_mic_button",
+                "Stopping create_overlay_mic_button service"
+        );
     }
 
     private void create_mic_button() {
+        Log.d(
+                "create_overlay_mic_button",
+                "Starting create_overlay_mic_button service"
+        );
+
         if (MainActivity.checkbox_offline_mode != null) PREFER_OFFLINE_STATUS.OFFLINE = MainActivity.checkbox_offline_mode.isChecked();
         mGlobalOverlay_mic_button = new GlobalOverlay(this);
         mic_button = new ImageView(this);

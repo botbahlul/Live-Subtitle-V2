@@ -10,16 +10,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.StrictMode;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -111,8 +109,9 @@ public class MainActivity extends AppCompatActivity {
 
         audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
-        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
-        audio.setSpeakerphoneOn(true);
+        //setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        //audio.setSpeakerphoneOn(true);
 
         display = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(display);
@@ -146,10 +145,6 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
             getSupportActionBar().setCustomView(R.layout.actionbar_layout);
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
         }
 
         checkbox_debug_mode.setOnClickListener(view -> {
@@ -255,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
             textview_debug.setVisibility(View.GONE);
         }
 
+        /*
         final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
         PackageManager pm = getPackageManager();
         boolean isInstalled = isPackageInstalled("com.google.android.googlequicksearchbox", pm);
@@ -281,6 +277,69 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 setup_spinner(arraylist_languages);
                             }
+                        }
+                    }
+                },
+                null,
+                Activity.RESULT_OK,
+                null,
+                null
+        );
+        */
+
+        final String GOOGLE_SEARCH_PACKAGE = "com.google.android.googlequicksearchbox";
+        final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
+        PackageManager pm = getPackageManager();
+        boolean isInstalled = isPackageInstalled(GOOGLE_SEARCH_PACKAGE, pm);
+
+        if (!isInstalled) {
+            Toast.makeText(this, "Please install Google app", Toast.LENGTH_SHORT).show();
+        } else {
+            ri.setPackage(GOOGLE_SEARCH_PACKAGE);
+        }
+
+        // Add background flag so it won't stuck in new android
+        ri.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+
+        this.sendOrderedBroadcast(ri, null, new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        Bundle extra = getResultExtras(false);
+                        if (extra == null || !extra.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)) {
+                            extra = intent.getExtras();
+                        }
+
+                        // CONDITION 1: RUNNING ON VERSION 11.XX.XX (Google App gives language list)
+                        Log.d("MainActivity", "arraylist_languages = " + extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES));
+                        if (extra != null && extra.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)) {
+                            arraylist_languages = extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
+
+                            if (arraylist_languages != null && !arraylist_languages.isEmpty()) {
+                                dialects = arraylist_languages.toArray(new String[0]);
+                                for (int i = 0; i < dialects.length; i++) {
+                                    dialects[i] = dialects[i].trim();
+                                }
+
+                                ArrayList<String> displayLanguages = new ArrayList<>();
+                                for (int i = 0; i < arraylist_languages.size(); i++) {
+                                    Locale locale = Locale.forLanguageTag(arraylist_languages.get(i));
+                                    displayLanguages.add(locale.getDisplayName().trim());
+                                }
+
+                                countries = displayLanguages.toArray(new String[0]);
+                                for (int i = 0; i < countries.length; i++) {
+                                    countries[i] = countries[i].trim();
+                                }
+
+                                setup_spinner(displayLanguages);
+
+                            } else {
+                                loadLocaleLanguages();
+                            }
+
+                        } else {
+                            // CONDITIONS 2: RUNNING ON VERSION 17.XX.XX (Broadcast was blocked by Google, taking from system)
+                            loadLocaleLanguages();
                         }
                     }
                 },
@@ -342,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
                 stop_voice_recognizer();
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
+
                 if (OVERLAYING_STATUS.IS_OVERLAYING) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
@@ -678,6 +738,172 @@ public class MainActivity extends AppCompatActivity {
     public void setText(final TextView tv, final String text){
         new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
         //runOnUiThread(() -> tv.setText(text));
+    }
+
+    private void loadLocaleLanguages1() {
+        ArrayList<String> localLanguages = new ArrayList<>();
+        ArrayList<String> tempDialects = new ArrayList<>();
+        ArrayList<String> tempCountries = new ArrayList<>();
+
+        // Retrieve the complete local list available on the Android OS system.
+        Locale[] availableLocales = Locale.getAvailableLocales();
+
+        // Create a whitelist of major world languages fully supported by voice recognition
+        // You can add or remove language codes (ISO 639-1) below based on your app's target market
+        java.util.List<String> supportedVoiceLangs = java.util.Arrays.asList(
+                // --- ASIA TIMUR & TENGGARA ---
+                "id",   // Indonesia
+                "in",   // Indonesia
+                "jv",   // Jawa (Indonesia)
+                "su",   // Sunda (Indonesia)
+                "ms",   // Melayu (Malaysia / Brunei)
+                "zh",   // Mandarin / China (Simplified, Traditional, Hong Kong, Taiwan)
+                "ja",   // Jepang
+                "ko",   // Korea
+                "th",   // Thailand
+                "vi",   // Vietnam
+                "fil",  // Filipina / Tagalog
+                "km",   // Khmer (Kamboja)
+                "lo",   // Lao (Laos)
+                "my",   // Burma (Myanmar)
+
+                // --- ASIA SELATAN (INDIA & SEKITARNYA) ---
+                "hi",   // Hindi
+                "bn",   // Bengali (India / Bangladesh)
+                "ta",   // Tamil (India / Singapura / Sri Lanka)
+                "te",   // Telugu
+                "kn",   // Kannada
+                "mr",   // Marathi
+                "gu",   // Gujarati
+                "ml",   // Malayalam
+                "ur",   // Urdu (India / Pakistan)
+                "ne",   // Nepali
+                "si",   // Sinhala (Sri Lanka)
+                "pa",   // Punjabi
+
+                // --- EROPA BARAT, UTARA & SELATAN ---
+                "en",   // Inggris (AS, Inggris, Australia, India, Kanada, Nigeria, Ghana, dll.)
+                "es",   // Spanyol (Spanyol, Meksiko, Argentina, Kolombia, dll.)
+                "fr",   // Prancis (Prancis, Kanada, Swiss, Belgia)
+                "de",   // Jerman (Jerman, Austria, Swiss)
+                "it",   // Italia
+                "nl",   // Belanda (Belanda, Belgia)
+                "pt",   // Portugis (Brasil, Portugal)
+                "sv",   // Swedia
+                "no",   // Norwegia
+                "da",   // Denmark
+                "fi",   // Finlandia
+                "is",   // Islandia
+                "gl",   // Galisia
+                "ca",   // Katala
+                "eu",   // Basque
+
+                // --- EROPA TIMUR & BALKAN ---
+                "ru",   // Rusia
+                "uk",   // Ukraina
+                "tr",   // Turki
+                "pl",   // Polandia
+                "cs",   // Ceko
+                "sk",   // Slowakia
+                "hu",   // Hungaria
+                "ro",   // Rumania
+                "bg",   // Bulgaria
+                "el",   // Yunani
+                "hr",   // Kroasia
+                "sr",   // Serbia
+                "sl",   // Slovenia
+                "et",   // Estonia
+                "lv",   // Latvia
+                "lt",   // Lithuania
+                "sq",   // Albania
+                "bs",   // Bosnia
+                "mk",   // Makedonia
+
+                // --- TIMUR TENGAH & ASIA TENGAH ---
+                "ar",   // Arab (Mesir, Saudi, UAE, Irak, dll.)
+                "fa",   // Persia / Farsi
+                "he",   // Ibrani (Israel)
+                "iw",   // Ibrani lama
+                "ka",   // Georgia
+                "hy",   // Armenia
+                "az",   // Azerbaijani
+                "kk",   // Kazakh
+                "ky",   // Kirgiz
+                "uz",   // Uzbek
+
+                // --- AFRIKA ---
+                "sw",   // Swahili (Tanzania, Kenya)
+                "af",   // Afrikaans
+                "zu",   // Zulu
+                "xh",   // Xhosa
+                "am",   // Amharik (Etiopia)
+                "so",   // Somali
+                "ha",   // Hausa
+                "ig",   // Igbo
+                "yo"    // Yoruba
+        );
+
+        for (Locale locale : availableLocales) {
+            // Take the raw language code (e.g., "id", "en") and country code (e.g., "ID", "US")
+            String language = locale.getLanguage();
+            String country = locale.getCountry();
+
+            // Filter: Only include locales with a clear combination of language AND country.
+            if (!language.isEmpty() && !country.isEmpty() && supportedVoiceLangs.contains(language)) {
+
+                // Manually format the language name to: "Language (Country)"
+                // Example: "Indonesia (Indonesia)" or "English (United States)"
+                String displayLanguage = locale.getDisplayLanguage(Locale.getDefault()).trim();
+                String displayCountry = locale.getDisplayCountry(Locale.getDefault()).trim();
+                String formattedName = displayLanguage + " (" + displayCountry + ")";
+                // Get the standard dialect tag code (e.g., "id-ID", "en-US")
+                String languageTag = locale.toLanguageTag();
+
+                // Avoid duplicate items in the Spinner list.
+                if (!localLanguages.contains(formattedName)) {
+                    localLanguages.add(formattedName);
+                    tempDialects.add(languageTag);
+                    tempCountries.add(formattedName);
+                }
+            }
+        }
+
+        // Add it to global array so it can be read by the subtitle engine or voice recognizer
+        dialects = tempDialects.toArray(new String[0]);
+        countries = tempCountries.toArray(new String[0]);
+        arraylist_languages = new ArrayList<>(localLanguages);
+
+        // Safely add it to spinner in version 17.xx.xx
+        setup_spinner(localLanguages);
+    }
+
+    private void loadLocaleLanguages() {
+        ArrayList<String> localLanguages = new ArrayList<>();
+
+        // Retrieves the list of language code standards (ISO 639) currently supported by the Android Engine
+        String[] isoLanguages = Locale.getISOLanguages();
+        ArrayList<String> tempDialects = new ArrayList<>();
+        ArrayList<String> tempCountries = new ArrayList<>();
+
+        // Limit the number of primary languages ​​retrieved so the Spinner doesn't become too crowded or heavy.
+        for (String langCode : isoLanguages) {
+            Locale locale = new Locale(langCode);
+            String displayName = locale.getDisplayName().trim();
+
+            // Filter to exclude strange language names or those consisting of numeric codes
+            if (!displayName.isEmpty() && !localLanguages.contains(displayName) && displayName.length() < 30) {
+                localLanguages.add(displayName);
+                tempDialects.add(locale.toLanguageTag());
+                tempCountries.add(displayName);
+            }
+        }
+
+        // Convert back to your global array to keep it synchronized with your audio recording system.
+        dialects = tempDialects.toArray(new String[0]);
+        countries = tempCountries.toArray(new String[0]);
+
+        // Safely insert the result into your spinner in version 17
+        setup_spinner(localLanguages);
     }
 
 }

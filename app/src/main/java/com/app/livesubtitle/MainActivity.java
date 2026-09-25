@@ -109,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
 
         audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
-        //setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        //audio.setSpeakerphoneOn(true);
+        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
+        setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+        audio.setSpeakerphoneOn(true);
 
         display = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(display);
@@ -310,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         // CONDITION 1: RUNNING ON VERSION 11.XX.XX (Google App gives language list)
-                        Log.d("MainActivity", "arraylist_languages = " + extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES));
+                        Log.d("MainActivity", "extra = " + extra);
                         if (extra != null && extra.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)) {
                             arraylist_languages = extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
 
@@ -681,9 +681,11 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_textview_align, supported_languages);
         adapter.setDropDownViewResource(R.layout.spinner_textview_align);
         spinner_src_languages.setAdapter(adapter);
-        spinner_src_languages.setSelection(supported_languages.indexOf("Indonesian (Indonesia)"));
+        //spinner_src_languages.setSelection(supported_languages.indexOf("Indonesian (Indonesia)"));
+        spinner_src_languages.setSelection(supported_languages.indexOf("Indonesian"));
         spinner_dst_languages.setAdapter(adapter);
-        spinner_dst_languages.setSelection(supported_languages.indexOf("English (United States)"));
+        //spinner_dst_languages.setSelection(supported_languages.indexOf("English (United States)"));
+        spinner_dst_languages.setSelection(supported_languages.indexOf("English"));
     }
 
     /*private void checkRecordAudioPermission() {
@@ -719,7 +721,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void start_voice_recognizer() {
         Intent i = new Intent(this, VoiceRecognizer.class);
-        startService(i);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(i);
+        } else {
+            startService(i);
+        }
     }
 
     private void stop_voice_recognizer() {

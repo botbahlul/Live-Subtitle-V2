@@ -4,10 +4,10 @@ ANDROID APP that will RECOGNIZER (using free Android Developer Speech Recognitio
 This app has PROS & CONS compared to other Speech Recognition APIs like VOSK, IBM WATSON, and PREMIUM GOOGPLE SPEECH API
 
 PROS:
-It's FREE and supports all languages supported by Google with very good accuracy
+It's FREE and supports all languages supported by Google with good enough accuracy
 
 CONS:
-The google speech recognition engine is very laggy and for online streaming currently I can only test it smoothly without any audio/video interruption in MyPlayer only (VLC seems can no longer play youtube streams)
+The free google speech recognition engine can be sometimes get busy, and for online streaming currently I can only test it SMOOTHLY without any audio/video interruption in MyPlayer only (VLC seems can no longer play youtube streams)
 
 This app is modified version of my previous app https://github.com/botbahlul/Live-Subtitle (on the TRANSLATION METHODE) which on this version I use ONLINE Google Translate API
 

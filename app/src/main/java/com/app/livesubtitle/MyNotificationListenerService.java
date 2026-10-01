@@ -6,6 +6,8 @@ import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.Handler;
+import android.os.Looper;
 import android.service.notification.NotificationListenerService;
 import android.util.Log;
 
@@ -43,7 +45,7 @@ public class MyNotificationListenerService
             }
 
             List<MediaController> controllers = mediaSessionManager.getActiveSessions(new ComponentName(this, MyNotificationListenerService.class));
-            Log.d(TAG,"Active MediaSessions = " + controllers.size());
+            //Log.d(TAG,"Active MediaSessions = " + controllers.size());
 
             for (MediaController controller : controllers) {
                 String packageName = controller.getPackageName();
@@ -91,7 +93,7 @@ public class MyNotificationListenerService
 
             ComponentName notificationListener = new ComponentName(instance, MyNotificationListenerService.class);
             List<MediaController> controllers = mediaSessionManager.getActiveSessions(notificationListener);
-            Log.d(TAG, "Active MediaSessions = " + controllers.size());
+            //Log.d(TAG, "Active MediaSessions = " + controllers.size());
 
             for (MediaController controller : controllers) {
                 String packageName = controller.getPackageName();
@@ -100,40 +102,19 @@ public class MyNotificationListenerService
                 }
 
                 PlaybackState state = controller.getPlaybackState();
-
-                /*
-                if (state == null) {
-                    Log.d(TAG, "Opera PlaybackState = NULL");
-                    return;
-                }
-
-                int currentState = state.getState();
-                Log.d(TAG, "Opera PlaybackState = " + playbackStateToString(currentState));
-
-                if (currentState == PlaybackState.STATE_PAUSED) {
-                    Log.d(TAG, "Opera is PAUSED -> sending PLAY");
-                    controller.getTransportControls().play();
-
-                } else {
-                    Log.d(TAG, "Opera is not paused -> no PLAY command");
-                }
-                */
-
                 float currentPlaybackSpeed = state.getPlaybackSpeed();
-                Log.d(TAG, "Opera PlaybackSpeed = " + currentPlaybackSpeed);
-
+                //Log.d(TAG, "Opera PlaybackSpeed = " + currentPlaybackSpeed);
                 if (currentPlaybackSpeed == 0) {
-                    Log.d(TAG, "Operap playback speed is zero -> sending PLAY");
+                    //Log.d(TAG, "Operap playback speed is zero -> sending PLAY");
                     controller.getTransportControls().play();
 
                 } else {
-                    Log.d(TAG, "Opera is still playing -> no PLAY command");
+                    //Log.d(TAG, "Opera is still playing -> no PLAY command");
                 }
 
                 return;
             }
-
-            Log.d(TAG, "Opera MediaSession not found");
+            //Log.d(TAG, "Opera MediaSession not found");
 
         } catch (SecurityException e) {
             Log.e(TAG, "SecurityException: " + e.getMessage(), e);

@@ -1,14 +1,11 @@
 package com.app.livesubtitle;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.media.MediaMetadata;
-import android.media.session.MediaController;
-import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,6 +21,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -38,7 +36,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
@@ -58,6 +55,8 @@ public class VoiceRecognizer extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    String src_dialect = LANGUAGE.SRC_DIALECT;
+    private static final String TAG = "VoiceRecognizer";
     private SpeechRecognizer speechRecognizer = null;
     public static Intent speechRecognizerIntent;
     private Timer timer;
@@ -78,7 +77,6 @@ public class VoiceRecognizer extends Service {
         }
         MainActivity.voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
 
-        String src_dialect = LANGUAGE.SRC_DIALECT;
         if (speechRecognizer != null) speechRecognizer.destroy();
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
         MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
@@ -94,21 +92,33 @@ public class VoiceRecognizer extends Service {
         if (SpeechRecognizer.isRecognitionAvailable(this)) {
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
             speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            speechRecognizerIntent.putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            );
             //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, Objects.requireNonNull(getClass().getPackage()).getName());
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
             //speechRecognizerIntent.putExtra("android.speech.extra.HIDE_PARTIAL_TRAILING_PUNCTUATION", true);
-            //speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
+            speechRecognizerIntent.putExtra("android.speech.extra.DICTATION_MODE", true);
             //speechRecognizerIntent.putExtra("android.speech.extra.AUDIO_SOURCE",true);
+            speechRecognizerIntent.putExtra("android.speech.extra.AUDIO_SOURCE", 1); // 1 = Media/Default Source
+            speechRecognizerIntent.putExtra("android.speech.extra.RECEIVE_AUDIO_RECORD_NOTIFICATION", false);
+            speechRecognizerIntent.putExtra("android.speech.extra.REQUEST_AUDIO_FOCUS", false); // Mencegah Google meminta Audio Focus
             //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO",true);
             //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO_FORMAT", AudioFormat.ENCODING_PCM_8BIT);
-            speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", true);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, src_dialect);
-            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,3600000);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,3600000);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
+            //speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", true);
+            speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "com.google.android.googlequicksearchbox");
             //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_ENABLE_FORMATTING, RecognizerIntent.FORMATTING_OPTIMIZE_LATENCY);
+            }
 
             speechRecognizer.setRecognitionListener(new RecognitionListener() {
                 @Override
@@ -191,8 +201,7 @@ public class VoiceRecognizer extends Service {
                     } else {
                         if (Objects.equals(getErrorText(errorCode), "Insufficient permissions")) {
                             setText(MainActivity.textview_output_messages, "Please give RECORD AUDIO PERMISSION (USE MICROPHONE PERMISSION) to GOOGLE APP");
-                        }
-                        else {
+                        } else {
                             setText(MainActivity.textview_debug, "onError : " + getErrorText(errorCode));
                         }
                         speechRecognizer.startListening(speechRecognizerIntent);
@@ -201,7 +210,8 @@ public class VoiceRecognizer extends Service {
                                 //sendMediaPlay();
                                 MyNotificationListenerService.ensureOperaPlaying();
                             }
-                        }, 200);                    }
+                        }, 200);
+                    }
                 }
 
                 @Override
@@ -293,6 +303,8 @@ public class VoiceRecognizer extends Service {
                     return message;
                 }
             });
+        } else {
+            Toast.makeText(this, "Speech recognition is not available, please install Google app", Toast.LENGTH_SHORT).show();
         }
 
         if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
@@ -303,8 +315,7 @@ public class VoiceRecognizer extends Service {
                 @Override
                 public void run() {
 
-                    if (VOICE_TEXT.STRING != null &&
-                            !Objects.equals(VOICE_TEXT.STRING, "")) {
+                    if (VOICE_TEXT.STRING != null && !Objects.equals(VOICE_TEXT.STRING, "")) {
 
                         // =================================================
                         // ENDPOINT TEST HAS NOT FINISHED YET
@@ -317,14 +328,14 @@ public class VoiceRecognizer extends Service {
                         // ENDPOINT 2 SUCCESS
                         // =================================================
                         if (GOOGLE_TRANSLATE_ENDPOINT == 1) {
-                            Log.d("testGoogleTranslate", "Using GoogleTranslate1");
+                            ///Log.d("testGoogleTranslate", "Using GoogleTranslate1");
                             GoogleTranslate1(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
                         }
                         // =================================================
                         // ENDPOINT 2 SUCCESS
                         // =================================================
                         else if (GOOGLE_TRANSLATE_ENDPOINT == 2) {
-                            Log.d("testGoogleTranslate", "Using GoogleTranslate2");
+                            //Log.d("testGoogleTranslate", "Using GoogleTranslate2");
                             GoogleTranslate2(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
 
                         }
@@ -361,7 +372,7 @@ public class VoiceRecognizer extends Service {
     }
 
     public void setText(final TextView tv, final String text){
-            new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
+        new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
     }
 
     private void testGoogleTranslateEndpoints() {
@@ -523,17 +534,17 @@ public class VoiceRecognizer extends Service {
                     response.getEntity().writeTo(byteArrayOutputStream);
                     String responseString = byteArrayOutputStream.toString("UTF-8");
                     byteArrayOutputStream.close();
-                    Log.d("GoogleTranslate1", "Response: " + responseString);
+                    //Log.d("GoogleTranslate1", "Response: " + responseString);
                     JSONArray jsonArray = new JSONArray(responseString);
                     for (int i = 0; i < jsonArray.length(); i++) {
                         if (!jsonArray.isNull(i)) {
                             TRANSLATION.set(TRANSLATION.get()+ jsonArray.getString(i));
                         }
                     }
-                    Log.d("GoogleTranslate1", "TRANSLATION: " + TRANSLATION.get());
+                    //Log.d("GoogleTranslate1", "TRANSLATION: " + TRANSLATION.get());
 
                 } else {
-                    Log.e("GoogleTranslate1", "HTTP " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
+                    //Log.e("GoogleTranslate1", "HTTP " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
                     if (response.getEntity() != null) {
                         response.getEntity().getContent().close();
                     }
@@ -551,7 +562,7 @@ public class VoiceRecognizer extends Service {
 
             handler.post(() -> {
                 TRANSLATION_TEXT.STRING = TRANSLATION.toString();
-                Log.d("GoogleTranslate1", "TRANSLATION_TEXT.STRING: " + TRANSLATION_TEXT.STRING);
+                //Log.d("GoogleTranslate1", "TRANSLATION_TEXT.STRING: " + TRANSLATION_TEXT.STRING);
 
                 if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                     if (TRANSLATION_TEXT.STRING.length() == 0) {
@@ -696,7 +707,7 @@ public class VoiceRecognizer extends Service {
                             }
                         }
                         catch(Exception e) {
-                            Log.e("GoogleTranslate2", e.getMessage());
+                            //Log.e("GoogleTranslate2", e.getMessage());
                             e.printStackTrace();
                         }
                     } else {
@@ -751,119 +762,6 @@ public class VoiceRecognizer extends Service {
             executor.shutdown();
         }
         return TRANSLATION.toString();
-    }
-
-    private void sendMediaPlay() {
-        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        long eventTime = System.currentTimeMillis();
-        KeyEvent down = new KeyEvent(
-                eventTime,
-                eventTime,
-                KeyEvent.ACTION_DOWN,
-                KeyEvent.KEYCODE_MEDIA_PLAY,
-                0
-        );
-        KeyEvent up = new KeyEvent(
-                eventTime,
-                eventTime,
-                KeyEvent.ACTION_UP,
-                KeyEvent.KEYCODE_MEDIA_PLAY,
-                0
-        );
-        audioManager.dispatchMediaKeyEvent(down);
-        audioManager.dispatchMediaKeyEvent(up);
-    }
-
-    private void restartSpeechRecognizerAndPlay() {
-        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-            speechRecognizer.stopListening();
-        } else {
-            speechRecognizer.startListening(speechRecognizerIntent);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                    //sendMediaPlay();
-                    MyNotificationListenerService.ensureOperaPlaying();
-                }
-            }, 200);
-        }
-    }
-
-    private String playbackStateToString(int state) {
-        switch (state) {
-            case PlaybackState.STATE_NONE:
-                return "STATE_NONE";
-
-            case PlaybackState.STATE_STOPPED:
-                return "STATE_STOPPED";
-
-            case PlaybackState.STATE_PAUSED:
-                return "STATE_PAUSED";
-
-            case PlaybackState.STATE_PLAYING:
-                return "STATE_PLAYING";
-
-            case PlaybackState.STATE_FAST_FORWARDING:
-                return "STATE_FAST_FORWARDING";
-
-            case PlaybackState.STATE_REWINDING:
-                return "STATE_REWINDING";
-
-            case PlaybackState.STATE_BUFFERING:
-                return "STATE_BUFFERING";
-
-            case PlaybackState.STATE_ERROR:
-                return "STATE_ERROR";
-
-            case PlaybackState.STATE_CONNECTING:
-                return "STATE_CONNECTING";
-
-            default:
-                return "UNKNOWN(" + state + ")";
-        }
-    }
-
-    private void testOperaPlaybackState() {
-        try {
-            MediaSessionManager mediaSessionManager = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
-            if (mediaSessionManager == null) {
-                Log.e("MediaSessionTest", "MediaSessionManager == null");
-                return;
-            }
-            List<MediaController> controllers = mediaSessionManager.getActiveSessions(null);
-            Log.d("MediaSessionTest", "Active sessions: " + controllers.size());
-
-            for (MediaController controller : controllers) {
-                String packageName = controller.getPackageName();
-                Log.d("MediaSessionTest", "Package: " + packageName);
-
-                if (packageName != null && packageName.toLowerCase(Locale.ROOT).contains("opera")) {
-                    Log.d("MediaSessionTest", "===== OPERA MEDIA SESSION =====");
-                    PlaybackState playbackState = controller.getPlaybackState();
-                    if (playbackState == null) {
-                        Log.d("MediaSessionTest", "Opera PlaybackState = NULL");
-                    } else {
-                        int state = playbackState.getState();
-                        Log.d("MediaSessionTest", "Opera PlaybackState = " + playbackStateToString(state));
-                        Log.d("MediaSessionTest", "Position = " + playbackState.getPosition());
-                        Log.d("MediaSessionTest", "Playback speed = " + playbackState.getPlaybackSpeed());
-                        Log.d("MediaSessionTest", "Actions = " + playbackState.getActions());
-                        Log.d("MediaSessionTest", "Last update time = " + playbackState.getLastPositionUpdateTime());
-                    }
-
-                    MediaMetadata metadata = controller.getMetadata();
-                    if (metadata != null) {
-                        Log.d("MediaSessionTest", "Title = " + metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
-                        Log.d("MediaSessionTest", "Artist = " + metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
-                    }
-                    Log.d("MediaSessionTest", "================================");
-                }
-            }
-
-        } catch (SecurityException e) {
-            Log.e("MediaSessionTest", "Cannot access active MediaSessions: " + e.getMessage(), e);
-        } catch (Exception e) {
-            Log.e("MediaSessionTest", "MediaSession test error", e);
-        }
     }
 
 }

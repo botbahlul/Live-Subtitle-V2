@@ -80,7 +80,7 @@ public class MyNotificationListenerService
 
     public static void ensureOperaPlaying() {
         if (instance == null) {
-            Log.e(TAG, "Notification Listener is not connected");
+            //Log.e(TAG, "Notification Listener is not connected");
             return;
         }
 

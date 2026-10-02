@@ -1,5 +1,6 @@
 package com.app.livesubtitle;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -35,6 +36,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     public static TextView textview_dst;
     @SuppressLint("StaticFieldLeak")
     public static CheckBox checkbox_offline_mode;
+    @SuppressLint("StaticFieldLeak")
+    public static Button button_download_language;
     @SuppressLint("StaticFieldLeak")
     public static EditText voice_text;
     @SuppressLint("StaticFieldLeak")
@@ -89,6 +95,11 @@ public class MainActivity extends AppCompatActivity {
     private final String GOOGLE_SEARCH_PACKAGE = "com.google.android.googlequicksearchbox";
     private final Intent ri = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
 
+    public boolean isNotificationServiceEnabled() {
+        String pkgName = getPackageName();
+        return NotificationManagerCompat.getEnabledListenerPackages(this).contains(pkgName);
+    }
+
     @SuppressLint({"ClickableViewAccessibility", "QueryPermissionsNeeded", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         checkbox_debug_mode = findViewById(R.id.checkbox_debug_mode);
         spinner_src_languages = findViewById(R.id.spinner_src_languages);
         checkbox_offline_mode = findViewById(R.id.checkbox_offline_mode);
+        button_download_language =  findViewById(R.id.button_download_language);
+        button_download_language.setVisibility(View.GONE);
         spinner_dst_languages = findViewById(R.id.spinner_dst_languages);
         Button button_toggle_overlay = findViewById(R.id.button_toggle_overlay);
         textview_src_dialect = findViewById(R.id.textview_src_dialect);
@@ -113,10 +126,18 @@ public class MainActivity extends AppCompatActivity {
         TRANSLATION_TEXT.STRING = "";
         PREFER_OFFLINE_STATUS.OFFLINE = checkbox_offline_mode.isChecked();
 
+        checkbox_offline_mode.setOnClickListener(view -> {
+            if (((CompoundButton) view).isChecked()) {
+                button_download_language.setVisibility(View.VISIBLE);
+            } else {
+                button_download_language.setVisibility(View.GONE);
+            }
+        });
+
         audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION); // Notification sound when we start SpeechRecognizer
-        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);
-        //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);         // set phone's ringtone volume to zero
+        setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION);         // set phone's ringtone volume to zero
+        //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         //audio.setSpeakerphoneOn(true);
 
         display = new DisplayMetrics();
@@ -133,12 +154,6 @@ public class MainActivity extends AppCompatActivity {
         OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
         textview_overlaying.setText(OVERLAYING_STATUS.STRING);
 
-        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (!notificationManager.isNotificationPolicyAccessGranted()) {
-            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-            startActivity(intent);
-        }
-
         int h;
         if (Objects.equals(LANGUAGE.DST, "ja") || Objects.equals(LANGUAGE.DST, "zh-CN") || Objects.equals(LANGUAGE.DST, "zh-TW")) {
             h = 75;
@@ -151,6 +166,21 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
             getSupportActionBar().setCustomView(R.layout.actionbar_layout);
+        }
+
+        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (!notificationManager.isNotificationPolicyAccessGranted()) {
+            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+            startActivity(intent);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        }
+
+        if (!isNotificationServiceEnabled()) {
+            Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            startActivity(i);
         }
 
         checkbox_debug_mode.setOnClickListener(view -> {
@@ -258,15 +288,39 @@ public class MainActivity extends AppCompatActivity {
 
         PackageManager pm = getPackageManager();
         boolean isInstalled = isPackageInstalled(GOOGLE_SEARCH_PACKAGE, pm);
-
         if (!isInstalled) {
             Toast.makeText(this, "Please install Google app", Toast.LENGTH_SHORT).show();
         } else {
             ri.setPackage(GOOGLE_SEARCH_PACKAGE);
         }
-
         // Add background flag so it won't stuck in new android
         ri.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+
+        button_download_language.setOnTouchListener((v, e) -> {
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                Intent intentDownload = new Intent();
+                intentDownload.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                try {
+                    // KODE YANG BENAR UNTUK HALAMAN PENGUNDUHAN BAHASA OFFLINE
+                    intentDownload.setComponent(new ComponentName(
+                            "com.google.android.googlequicksearchbox",
+                            "com.google.android.voicesearch.greco3.languagepack.InstallActivity"
+                    ));
+                    startActivity(intentDownload);
+                } catch (Exception exception) {
+                    try {
+                        // Cadangan alternatif jika struktur update Google App mendeteksi activity berbeda
+                        intentDownload.setClassName("com.google.android.googlequicksearchbox",
+                                "com.google.android.voicesearch.writersync.LanguagePackDownloadActivity");
+                        startActivity(intentDownload);
+                    } catch (Exception ex) {
+                        Toast.makeText(this, "Failed to open automatic download menu.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+            return false;
+        });
+
 
         this.sendOrderedBroadcast(ri, null, new BroadcastReceiver() {
                     @Override

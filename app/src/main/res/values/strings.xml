@@ -7,4 +7,5 @@
     <string name="toggle_overlay">Toggle Overlay\n(ON/OFF)</string>
     <string name="use_offline_mode">Use offline mode</string>
     <string name="recognized_words">Recognized words</string>
+    <string name="download_language">DOWNLOAD LANGUAGE</string>
 </resources>

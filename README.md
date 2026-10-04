@@ -15,7 +15,7 @@ If you don't see your desired voice language in download language dialogue of Us
 
 <img width="453" height="878" alt="image" src="https://github.com/user-attachments/assets/7844cf27-3487-403c-a778-d0a231e27e3e" />
 
-Make sure you check all the language you want to use offline speech recognition
+Make sure you check all the languages you want to use in offline mode
 
 <img width="436" height="930" alt="image" src="https://github.com/user-attachments/assets/ece2f7f2-f697-41ac-b1a3-1c33b3c345ea" />
 

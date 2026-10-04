@@ -19,6 +19,7 @@ Make sure you check all the languages you want to use in offline mode
 
 <img width="436" height="930" alt="image" src="https://github.com/user-attachments/assets/ece2f7f2-f697-41ac-b1a3-1c33b3c345ea" />
 
+
 This app is modified version of my previous app https://github.com/botbahlul/Live-Subtitle (on the TRANSLATION METHODE) which on this version I use ONLINE Google Translate API
 
 Check my other SPEECH RECOGNITIION + TRANSLATE PROJECTS https://github.com/botbahlul?tab=repositories

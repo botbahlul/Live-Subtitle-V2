@@ -9,7 +9,7 @@ It's FREE and supports all languages supported by Google with good enough accura
 CONS:
 The free google speech recognition engine can be sometimes get busy, and for online streaming currently I can only test it SMOOTHLY without any audio/video interruption in MyPlayer only (VLC seems can no longer play youtube streams)
 
-If you don't see your desired voice language in download language dialogue of Use Offline Mode, open your phone Settings, search for Language and Input - Manage Keyboard - Google Voice Typing - Language
+If you don't see your desired voice language in download language dialogue of Use Offline Mode, open your phone Settings, search for Language and Input - Manage Keyboard - Google Voice Typing - Languages
 
 <img width="441" height="873" alt="image" src="https://github.com/user-attachments/assets/994a9d11-b3b4-4dfc-8517-dfcdd3b13cae" />
 

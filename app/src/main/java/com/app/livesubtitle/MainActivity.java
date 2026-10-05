@@ -946,7 +946,7 @@ public class MainActivity extends AppCompatActivity {
         setup_spinner(localLanguages);
     }
 
-    private void loadLocaleLanguages() {
+    private void loadLocaleLanguages4() {
         ArrayList<String> localLanguages = new ArrayList<>();
         ArrayList<String> tempDialects = new ArrayList<>();
         ArrayList<String> tempCountries = new ArrayList<>();
@@ -1093,6 +1093,114 @@ public class MainActivity extends AppCompatActivity {
                 tempDialects.add(language[1]);
                 tempCountries.add(language[0]);
             }
+        }
+
+        dialects = tempDialects.toArray(new String[0]);
+        countries = tempCountries.toArray(new String[0]);
+
+        setup_spinner(localLanguages);
+    }
+
+    private void loadLocaleLanguages() {
+        ArrayList<String> localLanguages = new ArrayList<>();
+        ArrayList<String> tempDialects = new ArrayList<>();
+        ArrayList<String> tempCountries = new ArrayList<>();
+
+        String[][] srcLanguages = {
+                {"Afrikaans", "af-ZA"},
+                {"Albanian", "sq-AL"},
+                {"Amharic", "am-ET"},
+                {"Arabic", "ar-SA"},
+                {"Armenian", "hy-AM"},
+                {"Assamese", "as-IN"},
+                {"Azerbaijani", "az-AZ"},
+                {"Basque", "eu-ES"},
+                {"Belarusian", "be-BY"},
+                {"Bengali", "bn-BD"},
+                {"Bosnian", "bs-BA"},
+                {"Bulgarian", "bg-BG"},
+                {"Catalan", "ca-ES"},
+                {"Cebuano", "ceb"},
+                {"Chinese", "cmn-Hans-CN"},
+                {"Croatian", "hr-HR"},
+                {"Czech", "cs-CZ"},
+                {"Danish", "da-DK"},
+                {"Dutch", "nl-NL"},
+                {"English", "en-US"},
+                {"Estonian", "et-EE"},
+                {"Filipino", "fil-PH"},
+                {"Finnish", "fi-FI"},
+                {"French", "fr-FR"},
+                {"Galician", "gl-ES"},
+                {"Georgian", "ka-GE"},
+                {"German", "de-DE"},
+                {"Greek", "el-GR"},
+                {"Gujarati", "gu-IN"},
+                {"Hebrew", "he-IL"},
+                {"Hindi", "hi-IN"},
+                {"Hungarian", "hu-HU"},
+                {"Icelandic", "is-IS"},
+                {"Indonesian", "id-ID"},
+                {"Irish", "ga-IE"},
+                {"Italian", "it-IT"},
+                {"Japanese", "ja-JP"},
+                {"Javanese", "jv-ID"},
+                {"Kannada", "kn-IN"},
+                {"Kazakh", "kk-KZ"},
+                {"Khmer", "km-KH"},
+                {"Korean", "ko-KR"},
+                {"Kyrgyz", "ky-KG"},
+                {"Lao", "lo-LA"},
+                {"Latvian", "lv-LV"},
+                {"Lingala", "ln-CD"},
+                {"Lithuanian", "lt-LT"},
+                {"Malay", "ms-MY"},
+                {"Malayalam", "ml-IN"},
+                {"Maltese", "mt-MT"},
+                {"Marathi", "mr-IN"},
+                {"Macedonian", "mk-MK"},
+                {"Mongolian", "mn-MN"},
+                {"Nepali", "ne-NP"},
+                {"Norwegian Bokmål", "nb-NO"},
+                {"Persian", "fa-IR"},
+                {"Polish", "pl-PL"},
+                {"Portuguese", "pt-BR"},
+                {"Punjabi", "pa-IN"},
+                {"Romanian", "ro-RO"},
+                {"Russian", "ru-RU"},
+                {"Serbian", "sr-RS"},
+                {"Sinhala", "si-LK"},
+                {"Slovak", "sk-SK"},
+                {"Slovenian", "sl-SI"},
+                {"Spanish", "es-ES"},
+                {"Sundanese", "su-ID"},
+                {"Swahili", "sw-TZ"},
+                {"Swedish", "sv-SE"},
+                {"Tamil", "ta-IN"},
+                {"Telugu", "te-IN"},
+                {"Thai", "th-TH"},
+                {"Turkish", "tr-TR"},
+                {"Ukrainian", "uk-UA"},
+                {"Urdu", "ur-PK"},
+                {"Vietnamese", "vi-VN"},
+                {"Zulu", "zu-ZA"}
+        };
+
+        for (String[] language : srcLanguages) {
+            String languageName = language[0];
+            String dialect = language[1];
+
+            Locale locale = Locale.forLanguageTag(dialect);
+            String countryName = locale.getDisplayCountry(Locale.ENGLISH);
+
+            if (countryName.isEmpty()) {
+                localLanguages.add(languageName);
+            } else {
+                localLanguages.add(languageName + " (" + countryName + ")");
+            }
+
+            tempDialects.add(dialect);
+            tempCountries.add(languageName);
         }
 
         dialects = tempDialects.toArray(new String[0]);

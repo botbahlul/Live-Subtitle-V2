@@ -54,12 +54,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 />
-
             <Spinner
                 android:id="@+id/spinner_src_languages"
                 android:contentDescription="@string/spinner_src_languages"
                 android:spinnerMode="dropdown"
-                android:backgroundTint="@color/colorPrimary"
+                android:backgroundTint="@color/colorPrimaryDark"
                 android:gravity="start"
                 android:textAlignment="gravity"
                 android:minHeight="40dp"
@@ -120,6 +119,22 @@
             android:layout_height="12sp"
             />
         <EditText
+            android:id="@+id/full_voice_text"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:autofillHints=""
+            android:background="@android:drawable/editbox_background"
+            android:gravity="bottom"
+            android:focusable="false"
+            android:focusableInTouchMode="true"
+            android:hint="@string/recognized_sentences"
+            android:maxLines="3"
+            android:textSize="18sp"
+            android:textAlignment="gravity"
+            android:textColorHint="#616161"
+            tools:ignore="LabelFor,TextFields"
+            />
+        <EditText
             android:id="@+id/voice_text"
             android:layout_width="match_parent"
             android:layout_height="120dp"
@@ -149,12 +164,11 @@
                 android:textAlignment="gravity"
                 android:textSize="16sp"
                 />
-
             <Spinner
                 android:id="@+id/spinner_dst_languages"
                 android:contentDescription="@string/spinner_dst_languages"
                 android:spinnerMode="dropdown"
-                android:backgroundTint="@color/colorPrimary"
+                android:backgroundTint="@color/colorPrimaryDark"
                 android:gravity="start"
                 android:textAlignment="gravity"
                 android:minHeight="40dp"

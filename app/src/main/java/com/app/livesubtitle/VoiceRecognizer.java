@@ -11,11 +11,8 @@ import android.os.Looper;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,7 +29,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
@@ -59,12 +55,14 @@ public class VoiceRecognizer extends Service {
     private Timer timer;
     private TimerTask timerTask;
     private volatile int GOOGLE_TRANSLATE_ENDPOINT = 0;
+    private String lastVoiceString = "";
+    //private String lastPartialResults = "";
+    private String translatedLastVoiceString = "";
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("VoiceRecognizer", "Starting VoiceRecognizer service"
-        );
+        Log.d("VoiceRecognizer", "Starting VoiceRecognizer service");
 
         int h;
         if (Objects.equals(LANGUAGE.SRC, "ja") || Objects.equals(LANGUAGE.SRC, "zh-Hans") || Objects.equals(LANGUAGE.SRC, "zh-Hant")) {
@@ -73,6 +71,8 @@ public class VoiceRecognizer extends Service {
             h = 109;
         }
         MainActivity.voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
+        MainActivity.full_voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
+        MainActivity.full_voice_text.setGravity(Gravity.BOTTOM);
 
         if (speechRecognizer != null) speechRecognizer.destroy();
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
@@ -102,12 +102,12 @@ public class VoiceRecognizer extends Service {
             //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO",true);
             //speechRecognizerIntent.putExtra("android.speech.extra.GET_AUDIO_FORMAT", AudioFormat.ENCODING_PCM_8BIT);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, src_dialect);
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,3600000);
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
             if (PREFER_OFFLINE_STATUS.OFFLINE) {
                 speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
             }
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,2000);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 300);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 600);
             speechRecognizerIntent.putExtra("android.speech.extra.SEGMENTED_SESSION", RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "com.google.android.googlequicksearchbox");
             //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true);
@@ -120,12 +120,12 @@ public class VoiceRecognizer extends Service {
                 public void onReadyForSpeech(Bundle arg0) {
                     setText(MainActivity.textview_debug, "onReadyForSpeech");
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
                     } else {
                         speechRecognizer.startListening(speechRecognizerIntent);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                //sendMediaPlay();
                                 MyNotificationListenerService.ensureOperaPlaying();
                             }
                         }, 200);
@@ -137,7 +137,8 @@ public class VoiceRecognizer extends Service {
                     setText(MainActivity.textview_debug, "onBeginningOfSpeech");
                     /*
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
                     } else {
                         speechRecognizer.startListening(speechRecognizerIntent);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -157,32 +158,24 @@ public class VoiceRecognizer extends Service {
 
                 @Override
                 public void onBufferReceived(byte[] buffer) {
-                    setText(MainActivity.textview_debug, "onBufferReceived: " + Arrays.toString(buffer));
-                    /*
-                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
-                    } else {
-                        speechRecognizer.startListening(speechRecognizerIntent);
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                //sendMediaPlay();
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
-                    }
-                    */
+                    //setText(MainActivity.textview_debug, "onBufferReceived: " + Arrays.toString(buffer));
                 }
 
                 @Override
                 public void onEndOfSpeech() {
                     setText(MainActivity.textview_debug, "onEndOfSpeech");
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
                     } else {
+                        Log.d(TAG, "onEndOfSpeech: Restarting speechRecognizer");
+                        if (!VOICE_TEXT.STRING.isEmpty()) {
+                            lastVoiceString = VOICE_TEXT.STRING + ".\n";
+                            //Log.d(TAG, "onEndOfSpeech: lastVoiceString = VOICE_TEXT.STRING = " + lastVoiceString);
+                        }
                         speechRecognizer.startListening(speechRecognizerIntent);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                //sendMediaPlay();
                                 MyNotificationListenerService.ensureOperaPlaying();
                             }
                         }, 200);
@@ -192,75 +185,151 @@ public class VoiceRecognizer extends Service {
                 @Override
                 public void onError(int errorCode) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
                     } else {
                         if (Objects.equals(getErrorText(errorCode), "Insufficient permissions")) {
                             setText(MainActivity.textview_output_messages, "Please give RECORD AUDIO PERMISSION (USE MICROPHONE PERMISSION) to GOOGLE APP");
                         } else {
                             setText(MainActivity.textview_debug, "onError : " + getErrorText(errorCode));
                         }
-                        speechRecognizer.startListening(speechRecognizerIntent);
+
+                        //speechRecognizer.startListening(speechRecognizerIntent);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                //sendMediaPlay();
+                                speechRecognizer.startListening(speechRecognizerIntent);
+                            }
+                        }, 200);
+
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                                 MyNotificationListenerService.ensureOperaPlaying();
                             }
                         }, 200);
+
                     }
                 }
 
                 @Override
                 public void onResults(Bundle results) {
-                        /*setText(MainActivity.textview_output_messages, "onResults");
-                        if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                            speechRecognizer.stopListening();
-                        } else {
-                            ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                            VOICE_TEXT.STRING = matches.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
-                            MainActivity.voice_text.setText(VOICE_TEXT.STRING);
-                            MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
-                            speechRecognizer.startListening(speechRecognizerIntent);
-                        }*/
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
+                    } else {
+                        setText(MainActivity.textview_output_messages, "onResults");
+                        if (!VOICE_TEXT.STRING.isEmpty()) {
+                            lastVoiceString = VOICE_TEXT.STRING + ".\n";
+                            //Log.d(TAG, "onResults: lastVoiceString = VOICE_TEXT.STRING = " + lastVoiceString);
+                        }
+                        if (MainActivity.full_voice_text != null && !lastVoiceString.isEmpty()) {
+                            appendText(MainActivity.full_voice_text, lastVoiceString);
+                            MainActivity.full_voice_text.setSelection(MainActivity.full_voice_text.getText().length());
+                            MainActivity.full_voice_text.setGravity(Gravity.BOTTOM);
+                            if (lastVoiceString != null && !Objects.equals(lastVoiceString, "")) {
+                                // =================================================
+                                // ENDPOINT TEST HAS NOT FINISHED YET
+                                // =================================================
+                                if (GOOGLE_TRANSLATE_ENDPOINT == 0) {
+                                    Log.d("testGoogleTranslate", "Waiting for endpoint test...");
+                                    return;
+                                }
+                                // =================================================
+                                // ENDPOINT 1 SUCCESS
+                                // =================================================
+                                if (GOOGLE_TRANSLATE_ENDPOINT == 1) {
+                                    //Log.d("testGoogleTranslate", "Using FullGoogleTranslate1");
+                                    FullGoogleTranslate1(lastVoiceString, LANGUAGE.SRC, LANGUAGE.DST);
+                                }
+                                // =================================================
+                                // ENDPOINT 2 SUCCESS
+                                // =================================================
+                                else if (GOOGLE_TRANSLATE_ENDPOINT == 2) {
+                                    //Log.d("testGoogleTranslate", "Using FullGoogleTranslate2");
+                                    FullGoogleTranslate2(lastVoiceString, LANGUAGE.SRC, LANGUAGE.DST);
+
+                                }
+                                // =================================================
+                                // BOTH ENDPOINT FAILED
+                                // =================================================
+                                else if (GOOGLE_TRANSLATE_ENDPOINT == -1) {
+                                    Log.e("testGoogleTranslate", "No working Google Translate endpoint");
+                                    create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.INVISIBLE);
+                                    create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
+                                }
+                            }
+                            lastVoiceString = "";
+                            //lastPartialResults = "";
+                        }
+                    }
                 }
 
                 @Override
                 public void onPartialResults(Bundle results) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
+                        //speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
                     } else {
-                        ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                        if (PREFER_OFFLINE_STATUS.OFFLINE) {
-                            ArrayList<String> unstableData = results.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
-                            if (unstableData != null) {
-                                VOICE_TEXT.STRING = data.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC)) + unstableData.get(0).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
+                        if (results != null) {
+                            setText(MainActivity.textview_output_messages, "onPartialResults");
+                            ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                            if (data == null || data.isEmpty()) {
+                                //Log.w("VOICE_DEBUG", "EMPTY PARTIAL RESULT - KEEPING PREVIOUS TEXT");
+                                //Log.w("data == null", "lastPartialResults = " + lastPartialResults);
+                                return;
                             }
-                        } else {
-                            StringBuilder text = new StringBuilder();
-                            for (String result : data)
-                                text.append(result);
-                            VOICE_TEXT.STRING = text.toString().toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
+                            if (PREFER_OFFLINE_STATUS.OFFLINE) {
+                                ArrayList<String> unstableData = results.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
+                                if (unstableData != null && !unstableData.isEmpty()) {
+                                    String stableText = data.get(0);
+                                    String unstableText = unstableData.get(0);
+                                    if (stableText == null) {
+                                        stableText = "";
+                                    }
+                                    if (unstableText == null) {
+                                        unstableText = "";
+                                    }
+                                    VOICE_TEXT.STRING = (stableText + unstableText).toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
+                                    //if (!VOICE_TEXT.STRING.isEmpty()) {
+                                    //    lastPartialResults = VOICE_TEXT.STRING.trim();
+                                    //}
+                                } else {
+                                    String text = data.get(0);
+                                    if (text == null || text.isEmpty()) {
+                                        //Log.w("VOICE_DEBUG", "EMPTY OFFLINE PARTIAL TEXT - KEEPING PREVIOUS TEXT");
+                                        //Log.w("text == null", "lastPartialResults = " + lastPartialResults);
+                                        return;
+                                    }
+                                    VOICE_TEXT.STRING = text.toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
+                                    //if (!VOICE_TEXT.STRING.isEmpty()) {
+                                    //    lastPartialResults = VOICE_TEXT.STRING.trim();
+                                    //}
+                                }
+                            } else {
+                                StringBuilder text = new StringBuilder();
+                                for (String result : data) {
+                                    if (result != null && !result.isEmpty()) {
+                                        text.append(result);
+                                    }
+                                }
+                                if (text.length() == 0) {
+                                    //Log.w("VOICE_DEBUG", "EMPTY PARTIAL TEXT - KEEPING PREVIOUS TEXT");
+                                    //Log.w("text.length() == 0", "lastPartialResults = " + lastPartialResults);
+                                    return;
+                                }
+                                VOICE_TEXT.STRING = text.toString().toLowerCase(Locale.forLanguageTag(LANGUAGE.SRC));
+                                //if (!VOICE_TEXT.STRING.isEmpty()) {
+                                //    lastPartialResults = VOICE_TEXT.STRING.trim();
+                                //}
+                            }
+                            MainActivity.voice_text.setText(VOICE_TEXT.STRING);
+                            MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
                         }
-                        MainActivity.voice_text.setText(VOICE_TEXT.STRING);
-                        MainActivity.voice_text.setSelection(MainActivity.voice_text.getText().length());
                     }
                 }
 
                 @Override
                 public void onEvent(int arg0, Bundle arg1) {
                     setText(MainActivity.textview_output_messages, "onEvent");
-                    /*
-                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        speechRecognizer.stopListening();
-                    } else {
-                        speechRecognizer.startListening(speechRecognizerIntent);
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                //sendMediaPlay();
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
-                    }
-                    */
                 }
 
                 public String getErrorText(int errorCode) {
@@ -311,9 +380,7 @@ public class VoiceRecognizer extends Service {
 
                 @Override
                 public void run() {
-
                     if (VOICE_TEXT.STRING != null && !Objects.equals(VOICE_TEXT.STRING, "")) {
-
                         // =================================================
                         // ENDPOINT TEST HAS NOT FINISHED YET
                         // =================================================
@@ -334,7 +401,6 @@ public class VoiceRecognizer extends Service {
                         else if (GOOGLE_TRANSLATE_ENDPOINT == 2) {
                             //Log.d("testGoogleTranslate", "Using GoogleTranslate2");
                             GoogleTranslate2(VOICE_TEXT.STRING, LANGUAGE.SRC, LANGUAGE.DST);
-
                         }
                         // =================================================
                         // BOTH ENDPOINT FAILED
@@ -348,7 +414,8 @@ public class VoiceRecognizer extends Service {
             timer.schedule(timerTask,0,2000);
 
         } else {
-            speechRecognizer.stopListening();
+            //speechRecognizer.stopListening();
+            speechRecognizer.destroy();
             if (timerTask != null) timerTask.cancel();
             if (timer != null) {
                 timer.cancel();
@@ -369,7 +436,15 @@ public class VoiceRecognizer extends Service {
     }
 
     public void setText(final TextView tv, final String text){
-        new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
+        if (tv != null) {
+            new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
+        }
+    }
+
+     private void appendText(final TextView tv, final String text){
+        if (tv != null) {
+            new Handler(Looper.getMainLooper()).post(() -> tv.append(text));
+        }
     }
 
     private void testGoogleTranslateEndpoints() {
@@ -559,37 +634,121 @@ public class VoiceRecognizer extends Service {
 
             handler.post(() -> {
                 TRANSLATION_TEXT.STRING = TRANSLATION.toString();
-
                 if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
                     if (TRANSLATION_TEXT.STRING.length() == 0) {
-                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                        if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                        }
                     } else {
-                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
-                        create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.TRANSPARENT);
-                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                        create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
-                        create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
-                        create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
-
-                        // Set selection ke akhir teks terlebih dahulu
-                        int textLength = create_overlay_translation_text.overlay_translation_text.getText().length();
-                        create_overlay_translation_text.overlay_translation_text.setSelection(textLength);
-
-                        int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-
-                        // PENCEGAHAN ERROR: Pastikan rentang span lebih besar dari 0
-                        if (selectionEnd > 0) {
-                            Spannable spannableString = new SpannableStringBuilder(TRANSLATION_TEXT.STRING);
-                            spannableString.setSpan(new ForegroundColorSpan(Color.YELLOW), 0, selectionEnd, 0);
-                            spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")), 0, selectionEnd, 0);
-                            create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                            create_overlay_translation_text.overlay_translation_text.setSelection(textLength);
+                        if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
+                            create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
+                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
+                            create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                            create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
+                            create_overlay_translation_text.overlay_translation_text.setHighlightColor(Color.TRANSPARENT);
+                            create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
+                            create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
+                            create_overlay_translation_text.overlay_translation_text.setTextColor(Color.parseColor("#FFFF00"));
+                            //android.util.Log.d("SubtitleDebug", "textColor=" + Integer.toHexString(create_overlay_translation_text.overlay_translation_text.getCurrentTextColor()) + ", alpha=" + create_overlay_translation_text.overlay_translation_text.getAlpha() + ", layerType=" + create_overlay_translation_text.overlay_translation_text.getLayerType() + ", backgroundAlpha=" + (create_overlay_translation_text.overlay_translation_text.getBackground() != null ? create_overlay_translation_text.overlay_translation_text.getBackground().getAlpha() : -1));
                         }
                     }
                 } else {
-                    create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                    create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                    if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                    }
+                }
+            });
+        });
+    }
+
+    private void FullGoogleTranslate1(String SENTENCE, String SRC, String DST) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        AtomicReference<String> TRANSLATION = new AtomicReference<>("");
+
+        try {
+            SENTENCE = URLEncoder.encode(SENTENCE, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
+        String finalSENTENCE = SENTENCE;
+
+        executor.execute(() -> {
+            HttpClient httpClient = null;
+            try {
+                String url = "https://clients5.google.com/translate_a/t";
+                String params =
+                        "?client=dict-chrome-ex"
+                                + "&sl=" + SRC
+                                + "&tl=" + DST
+                                + "&q=" + finalSENTENCE;
+
+                httpClient = new DefaultHttpClient();
+                HttpGet httpget = new HttpGet(url + params);
+                httpget.setHeader(
+                        "User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                "Chrome/139.0.0.0 Safari/537.36"
+                );
+                HttpResponse response = httpClient.execute(httpget);
+                StatusLine statusLine = response.getStatusLine();
+
+                if (statusLine.getStatusCode() == 200) {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(byteArrayOutputStream);
+                    String responseString = byteArrayOutputStream.toString("UTF-8");
+                    byteArrayOutputStream.close();
+                    //Log.d("FullGoogleTranslate1", "Response: " + responseString);
+                    JSONArray jsonArray = new JSONArray(responseString);
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        if (!jsonArray.isNull(i)) {
+                            TRANSLATION.set(TRANSLATION.get()+ jsonArray.getString(i));
+                        }
+                    }
+                    //Log.d("FullGoogleTranslate1", "TRANSLATION: " + TRANSLATION.get());
+
+                } else {
+                    //Log.e("FullGoogleTranslate1", "HTTP " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
+                    if (response.getEntity() != null) {
+                        response.getEntity().getContent().close();
+                    }
+                    throw new IOException("http " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
+                }
+
+            } catch (Exception e) {
+                Log.e("FullGoogleTranslate1", "Translation error", e);
+
+            } finally {
+                if (httpClient != null) {
+                    httpClient.getConnectionManager().shutdown();
+                }
+            }
+
+            handler.post(() -> {
+                translatedLastVoiceString = TRANSLATION.toString();
+                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                        create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
+                        create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
+                        appendText(create_overlay_translation_text.overlay_full_translation_text, translatedLastVoiceString);
+                        create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
+                        create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
+                        create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
+                    }
+                } else {
+                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.INVISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
+                    }
                 }
             });
         });
@@ -649,35 +808,32 @@ public class VoiceRecognizer extends Service {
                 handler.post(() -> {
                     TRANSLATION_TEXT.STRING = TRANSLATION.toString();
                     if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
+
                         if (TRANSLATION_TEXT.STRING.length() == 0) {
-                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
-                            executor.shutdown();
+                            if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                                create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                                create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                                executor.shutdown();
+                            }
                         } else {
-                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.TRANSPARENT);
-                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
-                            create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
-                            create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
-
-                            int textLength = create_overlay_translation_text.overlay_translation_text.getText().length();
-                            create_overlay_translation_text.overlay_translation_text.setSelection(textLength);
-
-                            int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-
-                            // PENCEGAHAN ERROR: Pastikan rentang span lebih besar dari 0
-                            if (selectionEnd > 0) {
-                                Spannable spannableString = new SpannableStringBuilder(TRANSLATION_TEXT.STRING);
-                                spannableString.setSpan(new ForegroundColorSpan(Color.YELLOW), 0, selectionEnd, 0);
-                                spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")), 0, selectionEnd, 0);
-                                create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                                create_overlay_translation_text.overlay_translation_text.setSelection(textLength);
+                            if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                                create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
+                                create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
+                                create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
+                                create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                                create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
+                                create_overlay_translation_text.overlay_translation_text.setHighlightColor(Color.TRANSPARENT);
+                                create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
+                                create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
+                                create_overlay_translation_text.overlay_translation_text.setTextColor(Color.parseColor("#FFFF00"));
+                                //android.util.Log.d("SubtitleDebug", "textColor=" + Integer.toHexString(create_overlay_translation_text.overlay_translation_text.getCurrentTextColor()) + ", alpha=" + create_overlay_translation_text.overlay_translation_text.getAlpha() + ", layerType=" + create_overlay_translation_text.overlay_translation_text.getLayerType() + ", backgroundAlpha=" + (create_overlay_translation_text.overlay_translation_text.getBackground() != null ? create_overlay_translation_text.overlay_translation_text.getBackground().getAlpha() : -1));
                             }
                         }
                     } else {
-                        create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
-                        create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                        if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                            create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                            create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                        }
                     }
                 });
             });
@@ -687,5 +843,84 @@ public class VoiceRecognizer extends Service {
         }
         return TRANSLATION.toString();
     }
+
+    private String FullGoogleTranslate2(String SENTENCE, String SRC, String DST) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        AtomicReference<String> TRANSLATION = new AtomicReference<>("");
+        try {
+            SENTENCE = URLEncoder.encode(SENTENCE, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        String finalSENTENCE = SENTENCE;
+        if (RECOGNIZING_STATUS.IS_RECOGNIZING && finalSENTENCE != null) {
+            executor.execute(() -> {
+                HttpClient httpClient;
+                try {
+                    String url = "https://translate.googleapis.com/translate_a/";
+                    String params = "single?client=gtx&sl=" + SRC + "&tl=" + DST + "&dt=t&q=" + finalSENTENCE;
+                    httpClient = new DefaultHttpClient();
+                    HttpResponse response = httpClient.execute(new HttpGet(url + params));
+                    ByteArrayOutputStream byteArrayOutputStream;
+                    StatusLine statusLine = response.getStatusLine();
+                    JSONArray jsonArray;
+                    if (statusLine.getStatusCode() == 200) {
+                        byteArrayOutputStream = new ByteArrayOutputStream();
+                        response.getEntity().writeTo(byteArrayOutputStream);
+                        String stringOfByteArrayOutputStream = byteArrayOutputStream.toString();
+                        try {
+                            jsonArray = new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0);
+                            //Log.d("FullGoogleTranslate2", "jsonArray = " + jsonArray);
+                            int length = jsonArray.length();
+                            for (int i = 0; i < length; i++) {
+                                TRANSLATION.set(TRANSLATION + new JSONArray(Objects.requireNonNull(stringOfByteArrayOutputStream)).getJSONArray(0).getJSONArray(i).get(0).toString());
+                            }
+                        }
+                        catch(Exception e) {
+                            //Log.e("FullGoogleTranslate2", e.getMessage());
+                            e.printStackTrace();
+                        }
+                    } else {
+                        response.getEntity().getContent().close();
+                        httpClient.getConnectionManager().shutdown();
+                        throw new IOException(statusLine.getReasonPhrase());
+                    }
+                    byteArrayOutputStream.close();
+                    httpClient.getConnectionManager().shutdown();
+                }
+
+                catch (Exception e) {
+                    Log.e("FullGoogleTranslate2", e.getMessage());
+                    e.printStackTrace();
+                }
+
+                handler.post(() -> {
+                    translatedLastVoiceString = TRANSLATION.toString();
+                    if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                        create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
+                        create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
+                        appendText(create_overlay_translation_text.overlay_full_translation_text, translatedLastVoiceString);
+                        create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
+                        create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
+                        create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
+                    } else {
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.INVISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
+                    }
+                });
+            });
+        }
+        else {
+            executor.shutdown();
+        }
+        return TRANSLATION.toString();
+    }
+
+
 
 }

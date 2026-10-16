@@ -21,7 +21,6 @@ public class create_overlay_mic_button extends Service {
     private GlobalOverlay mGlobalOverlay_mic_button;
     @SuppressLint("StaticFieldLeak")
     public static ImageView mic_button;
-    public static boolean IS_MIC_BUTTON_REMOVED = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -41,15 +40,15 @@ public class create_overlay_mic_button extends Service {
             mGlobalOverlay_mic_button.removeOverlayView(mic_button);
         }
 
-        if (IS_MIC_BUTTON_REMOVED) {
+        if (!MIC_BUTTON_STATUS.IS_OVERLAYING) {
             stop_voice_recognizer();
             stop_create_overlay_translation_text();
             RECOGNIZING_STATUS.IS_RECOGNIZING = false;
             RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
             MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
-            OVERLAYING_STATUS.IS_OVERLAYING = false;
-            OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-            MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+            //OVERLAYING_STATUS.IS_OVERLAYING = false;
+            //OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+            //MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
             MainActivity.textview_debug.setText("");
             VOICE_TEXT.STRING = "";
             TRANSLATION_TEXT.STRING = "";
@@ -83,8 +82,8 @@ public class create_overlay_mic_button extends Service {
         MainActivity.full_voice_text.setText("");
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
         MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
-        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+        //OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+        //MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
         String hints = "Recognized words";
         MainActivity.voice_text.setHint(hints);
         Log.d(
@@ -104,7 +103,7 @@ public class create_overlay_mic_button extends Service {
         }
         mGlobalOverlay_mic_button = new GlobalOverlay(this);
         mic_button = new ImageView(this);
-        IS_MIC_BUTTON_REMOVED = false;
+        MIC_BUTTON_STATUS.IS_OVERLAYING = true;
         if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
             mic_button.setImageResource(R.drawable.ic_mic_black_off);
         } else {
@@ -122,8 +121,8 @@ public class create_overlay_mic_button extends Service {
                         RECOGNIZING_STATUS.IS_RECOGNIZING = !RECOGNIZING_STATUS.IS_RECOGNIZING;
                         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                         MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
-                        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                        //OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
+                        //MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
                         MainActivity.textview_debug.setText("");
                         MainActivity.textview_output_messages.setText("");
                         if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
@@ -180,7 +179,7 @@ public class create_overlay_mic_button extends Service {
                     @Override
                     public void onRemoveOverlay(View view, boolean isRemovedByUser) {
                         if (view == mic_button && isRemovedByUser) {
-                            IS_MIC_BUTTON_REMOVED = true;
+                            MIC_BUTTON_STATUS.IS_OVERLAYING = false;
                             //toast("onRemoveOverlay");
                             stopSelf();
                         }

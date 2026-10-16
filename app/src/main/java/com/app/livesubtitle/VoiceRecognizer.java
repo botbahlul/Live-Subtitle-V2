@@ -77,8 +77,8 @@ public class VoiceRecognizer extends Service {
         if (speechRecognizer != null) speechRecognizer.destroy();
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
         MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
-        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-        MainActivity.textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+        MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+        MainActivity.textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
 
         // =========================================================
         // ENDPOINT TEST
@@ -664,96 +664,6 @@ public class VoiceRecognizer extends Service {
         });
     }
 
-    private void FullGoogleTranslate1(String SENTENCE, String SRC, String DST) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-        AtomicReference<String> TRANSLATION = new AtomicReference<>("");
-
-        try {
-            SENTENCE = URLEncoder.encode(SENTENCE, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-
-        String finalSENTENCE = SENTENCE;
-
-        executor.execute(() -> {
-            HttpClient httpClient = null;
-            try {
-                String url = "https://clients5.google.com/translate_a/t";
-                String params =
-                        "?client=dict-chrome-ex"
-                                + "&sl=" + SRC
-                                + "&tl=" + DST
-                                + "&q=" + finalSENTENCE;
-
-                httpClient = new DefaultHttpClient();
-                HttpGet httpget = new HttpGet(url + params);
-                httpget.setHeader(
-                        "User-Agent",
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                                "Chrome/139.0.0.0 Safari/537.36"
-                );
-                HttpResponse response = httpClient.execute(httpget);
-                StatusLine statusLine = response.getStatusLine();
-
-                if (statusLine.getStatusCode() == 200) {
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    response.getEntity().writeTo(byteArrayOutputStream);
-                    String responseString = byteArrayOutputStream.toString("UTF-8");
-                    byteArrayOutputStream.close();
-                    //Log.d("FullGoogleTranslate1", "Response: " + responseString);
-                    JSONArray jsonArray = new JSONArray(responseString);
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        if (!jsonArray.isNull(i)) {
-                            TRANSLATION.set(TRANSLATION.get()+ jsonArray.getString(i));
-                        }
-                    }
-                    //Log.d("FullGoogleTranslate1", "TRANSLATION: " + TRANSLATION.get());
-
-                } else {
-                    //Log.e("FullGoogleTranslate1", "HTTP " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
-                    if (response.getEntity() != null) {
-                        response.getEntity().getContent().close();
-                    }
-                    throw new IOException("http " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
-                }
-
-            } catch (Exception e) {
-                Log.e("FullGoogleTranslate1", "Translation error", e);
-
-            } finally {
-                if (httpClient != null) {
-                    httpClient.getConnectionManager().shutdown();
-                }
-            }
-
-            handler.post(() -> {
-                translatedLastVoiceString = TRANSLATION.toString();
-                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
-                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
-                        create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
-                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
-                        create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
-                        create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
-                        create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
-                        appendText(create_overlay_translation_text.overlay_full_translation_text, translatedLastVoiceString);
-                        create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
-                        create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
-                        create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
-                    }
-                } else {
-                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
-                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.INVISIBLE);
-                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
-                    }
-                }
-            });
-        });
-    }
-
     private String GoogleTranslate2(String SENTENCE, String SRC, String DST) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -844,6 +754,96 @@ public class VoiceRecognizer extends Service {
         return TRANSLATION.toString();
     }
 
+    private void FullGoogleTranslate1(String SENTENCE, String SRC, String DST) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        AtomicReference<String> TRANSLATION = new AtomicReference<>("");
+
+        try {
+            SENTENCE = URLEncoder.encode(SENTENCE, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
+        String finalSENTENCE = SENTENCE;
+
+        executor.execute(() -> {
+            HttpClient httpClient = null;
+            try {
+                String url = "https://clients5.google.com/translate_a/t";
+                String params =
+                        "?client=dict-chrome-ex"
+                                + "&sl=" + SRC
+                                + "&tl=" + DST
+                                + "&q=" + finalSENTENCE;
+
+                httpClient = new DefaultHttpClient();
+                HttpGet httpget = new HttpGet(url + params);
+                httpget.setHeader(
+                        "User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                "Chrome/139.0.0.0 Safari/537.36"
+                );
+                HttpResponse response = httpClient.execute(httpget);
+                StatusLine statusLine = response.getStatusLine();
+
+                if (statusLine.getStatusCode() == 200) {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(byteArrayOutputStream);
+                    String responseString = byteArrayOutputStream.toString("UTF-8");
+                    byteArrayOutputStream.close();
+                    //Log.d("FullGoogleTranslate1", "Response: " + responseString);
+                    JSONArray jsonArray = new JSONArray(responseString);
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        if (!jsonArray.isNull(i)) {
+                            TRANSLATION.set(TRANSLATION.get()+ jsonArray.getString(i));
+                        }
+                    }
+                    //Log.d("FullGoogleTranslate1", "TRANSLATION: " + TRANSLATION.get());
+
+                } else {
+                    //Log.e("FullGoogleTranslate1", "HTTP " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
+                    if (response.getEntity() != null) {
+                        response.getEntity().getContent().close();
+                    }
+                    throw new IOException("http " + statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
+                }
+
+            } catch (Exception e) {
+                Log.e("FullGoogleTranslate1", "Translation error", e);
+
+            } finally {
+                if (httpClient != null) {
+                    httpClient.getConnectionManager().shutdown();
+                }
+            }
+
+            handler.post(() -> {
+                translatedLastVoiceString = TRANSLATION.toString();
+                if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                        create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
+                        create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
+                        appendText(create_overlay_translation_text.overlay_full_translation_text, translatedLastVoiceString);
+                        create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
+                        create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
+                        create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
+                    }
+                } else {
+                    if (create_overlay_translation_text.overlay_full_translation_text_container != null) {
+                        create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.INVISIBLE);
+                        create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
+                    }
+                }
+            });
+        });
+    }
+
     private String FullGoogleTranslate2(String SENTENCE, String SRC, String DST) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -920,7 +920,5 @@ public class VoiceRecognizer extends Service {
         }
         return TRANSLATION.toString();
     }
-
-
 
 }

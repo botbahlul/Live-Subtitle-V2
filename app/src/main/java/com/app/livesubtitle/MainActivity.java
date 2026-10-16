@@ -162,11 +162,11 @@ public class MainActivity extends AppCompatActivity {
         DISPLAY_METRIC.DISPLAY_DENSITY = d;
 
         RECOGNIZING_STATUS.IS_RECOGNIZING = false;
-        OVERLAYING_STATUS.IS_OVERLAYING = false;
+        MIC_BUTTON_STATUS.IS_OVERLAYING = false;
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
         setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-        OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-        textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+        MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+        textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
 
         int h;
         if (Objects.equals(LANGUAGE.DST, "ja") || Objects.equals(LANGUAGE.DST, "zh-CN") || Objects.equals(LANGUAGE.DST, "zh-TW")) {
@@ -454,7 +454,7 @@ public class MainActivity extends AppCompatActivity {
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
 
-                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
                     } else {
@@ -463,14 +463,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     start_create_overlay_mic_button();
                     if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setBackgroundColor(Color.parseColor("#80000000"));
-
                     start_create_overlay_translation_text();
                 }
 
                 RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                 setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -571,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
                 stop_voice_recognizer();
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
-                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
                     } else {
@@ -585,8 +584,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                 setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                textview_overlaying.setText(OVERLAYING_STATUS.STRING);
+                MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -634,10 +633,10 @@ public class MainActivity extends AppCompatActivity {
 
         button_toggle_overlay.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
-                OVERLAYING_STATUS.IS_OVERLAYING = !OVERLAYING_STATUS.IS_OVERLAYING;
-                OVERLAYING_STATUS.STRING =  "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                setText(textview_overlaying, OVERLAYING_STATUS.STRING);
-                if (OVERLAYING_STATUS.IS_OVERLAYING) {
+                MIC_BUTTON_STATUS.IS_OVERLAYING = !MIC_BUTTON_STATUS.IS_OVERLAYING;
+                MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                setText(textview_overlaying, MIC_BUTTON_STATUS.STRING);
+                if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
                     if (Settings.canDrawOverlays(getApplicationContext())) {
                         start_create_overlay_mic_button();
                         start_create_overlay_translation_text();
@@ -651,17 +650,17 @@ public class MainActivity extends AppCompatActivity {
                             if (Settings.canDrawOverlays(getApplicationContext())) {
                                 start_create_overlay_mic_button();
                                 start_create_overlay_translation_text();
-                                OVERLAYING_STATUS.IS_OVERLAYING = true;
+                                MIC_BUTTON_STATUS.IS_OVERLAYING = true;
                                 String os = "Overlay permission granted";
                                 setText(textview_output_messages, os);
                             }
                             else {
-                                OVERLAYING_STATUS.IS_OVERLAYING = false;
+                                MIC_BUTTON_STATUS.IS_OVERLAYING = false;
                                 String os = "Please retry to tap TOGGLE OVERLAY button again";
                                 setText(textview_output_messages, os);
                             }
-                            OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                            setText(textview_overlaying, OVERLAYING_STATUS.STRING);
+                            MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                            setText(textview_overlaying, MIC_BUTTON_STATUS.STRING);
                         }, 15000);
                     }
                 } else {
@@ -671,8 +670,8 @@ public class MainActivity extends AppCompatActivity {
                     RECOGNIZING_STATUS.IS_RECOGNIZING = false;
                     RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                     setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-                    OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                    setText(textview_overlaying, OVERLAYING_STATUS.STRING);
+                    MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                    setText(textview_overlaying, MIC_BUTTON_STATUS.STRING);
                     setText(textview_output_messages, "");
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
@@ -695,8 +694,8 @@ public class MainActivity extends AppCompatActivity {
                     setText(voice_text, "");
                     RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                     setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-                    OVERLAYING_STATUS.STRING = "OVERLAYING_STATUS.IS_OVERLAYING = " + OVERLAYING_STATUS.IS_OVERLAYING;
-                    setText(textview_overlaying, OVERLAYING_STATUS.STRING);
+                    MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                    setText(textview_overlaying, MIC_BUTTON_STATUS.STRING);
                     voice_text.setHint("Recognized words");
                     full_voice_text.setHint("Recognized sentences");
                 }

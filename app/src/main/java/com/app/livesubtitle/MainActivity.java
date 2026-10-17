@@ -769,6 +769,26 @@ public class MainActivity extends AppCompatActivity {
         return 0;
     }
 
+    private int getSpinnerIndexByDialectCode(ArrayList<String> supportedLanguages, String targetDialectCode) {
+        if (targetDialectCode == null || targetDialectCode.isEmpty()) return 0;
+
+        if (targetDialectCode.equalsIgnoreCase("zh-CN")) {
+            targetDialectCode = "cmn-Hans-CN";
+        }
+
+        for (int i = 0; i < supportedLanguages.size(); i++) {
+            String displayName = supportedLanguages.get(i);
+            String dialectCode = countries_dialects.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
+
+            if (dialectCode != null) {
+                if (dialectCode.equalsIgnoreCase(targetDialectCode)) {
+                    return i;
+                }
+            }
+        }
+        return 0;
+    }
+
     private void start_create_overlay_mic_button() {
         Intent i = new Intent(this, create_overlay_mic_button.class);
         startService(i);
@@ -819,8 +839,10 @@ public class MainActivity extends AppCompatActivity {
         spinner_src_languages.setAdapter(adapter);
         spinner_dst_languages.setAdapter(adapter);
 
-        spinner_src_languages.setSelection(getSpinnerIndexByCode(supported_languages, "id"));
-        spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
+        //spinner_src_languages.setSelection(getSpinnerIndexByCode(supported_languages, "id"));
+        //spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
+        spinner_src_languages.setSelection(getSpinnerIndexByDialectCode(supported_languages, "id-ID"));
+        spinner_dst_languages.setSelection(getSpinnerIndexByDialectCode(supported_languages, "en-US"));
     }
 
     // Google dialect tag conversion -> ML Kit code (one place only)

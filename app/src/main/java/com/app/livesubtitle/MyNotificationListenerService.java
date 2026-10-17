@@ -10,7 +10,6 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Build;
 import android.os.IBinder;
-import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -195,7 +194,7 @@ public class MyNotificationListenerService
                 .contains(context.getPackageName());
     }
 
-    /** Paksa sistem bind ulang: toggle komponen lalu requestRebind. */
+    /** Force system rebind: toggle component then requestRebind */
     public static void forceRebind(Context context) {
         if (!isEnabled(context)) return;
 

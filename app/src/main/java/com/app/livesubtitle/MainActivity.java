@@ -337,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intentDownload = new Intent();
                 intentDownload.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 try {
-                    // KODE YANG BENAR UNTUK HALAMAN PENGUNDUHAN BAHASA OFFLINE
+                    // CORRECT CODE FOR OFFLINE LANGUAGE DOWNLOAD PAGE
                     intentDownload.setComponent(new ComponentName(
                             "com.google.android.googlequicksearchbox",
                             "com.google.android.voicesearch.greco3.languagepack.InstallActivity"
@@ -345,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intentDownload);
                 } catch (Exception exception) {
                     try {
-                        // Cadangan alternatif jika struktur update Google App mendeteksi activity berbeda
+                        // Alternative backup if the Google App update structure detects different activity
                         intentDownload.setClassName("com.google.android.googlequicksearchbox",
                                 "com.google.android.voicesearch.writersync.LanguagePackDownloadActivity");
                         startActivity(intentDownload);
@@ -379,25 +379,9 @@ public class MainActivity extends AppCompatActivity {
                                 for (int i = 0; i < arraylist_languages.size(); i++) {
                                     String rawTag = arraylist_languages.get(i);
                                     Locale locale = Locale.forLanguageTag(rawTag.replace("_", "-"));
-
-                                    String displayName = locale.getDisplayName().trim();
-                                    //String displayNameLower = displayName.toLowerCase();
-
-                                    if (rawTag.startsWith("cmn-Hans-CN") || rawTag.startsWith("zh-CN") || displayName.contains("普通话 (中国大陆)")) {
-                                        displayName = "Chinese Simplified (China)";
-                                    }
-                                    else if (rawTag.startsWith("cmn-Hant-TW") || rawTag.startsWith("zh-TW") || displayName.contains("國語 (台灣)")) {
-                                        displayName = "Chinese Traditional (Taiwan)";
-                                    }
-                                    else if (rawTag.startsWith("cmn-Hans-HK") || displayName.contains("普通話 (香港)")) {
-                                        displayName = "Chinese Simplified (Hong Kong)";
-                                    }
-                                    else if (rawTag.startsWith("yue") || displayName.contains("廣東話 (香港)")) {
-                                        displayName = "Chinese Cantonese (Hong Kong)";
-                                    }
-                                    // THERE CAN ONLY BE ONE ADD HERE SO THAT THE DATA SIZE IS BALANCED
-                                    displayLanguages.add(displayName);
+                                    displayLanguages.add(friendlyName(arraylist_languages.get(i)));
                                 }
+
                                 countries = displayLanguages.toArray(new String[0]);
                                 for (int i = 0; i < countries.length; i++) {
                                     countries[i] = countries[i].trim();
@@ -751,11 +735,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (!MyNotificationListenerService.isEnabled(this)) {
-            // Arahkan user ke Settings lewat tombol/dialog, jangan otomatis tiap onResume
-            return;
+            Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            startActivity(i);
         }
-
-        // Beri waktu 1,5 detik agar sistem sempat bind sendiri; jika belum, paksa
         handler.removeCallbacks(checkConnection);
         handler.postDelayed(checkConnection, 1500);
     }
@@ -778,7 +760,6 @@ public class MainActivity extends AppCompatActivity {
             String dialectCode = countries_dialects.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
 
             if (dialectCode != null) {
-                // Memotong "id-ID" menjadi "id" saja agar cocok dengan input parameter Anda
                 String languageCode = dialectCode.split("-")[0];
                 if (languageCode.equalsIgnoreCase(targetCode)) {
                     return i;
@@ -824,19 +805,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setText(final TextView tv, final String text){
-        if (tv != null) {
-            new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
-            //runOnUiThread(() -> tv.setText(text));
-        }
-    }
-
-    private void appendText(final TextView tv, final String text){
-        if (tv != null) {
-            new Handler(Looper.getMainLooper()).post(() -> tv.append(text));
-        }
-    }
-
     public void setup_spinner(ArrayList<String> supported_languages) {
         countries_dialects = new HashMap<>();
         for (int i = 0; i < supported_languages.size(); i++) {
@@ -855,118 +823,65 @@ public class MainActivity extends AppCompatActivity {
         spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
     }
 
-    private void loadLocaleLanguages() {
-        ArrayList<String> localLanguages = new ArrayList<>();
-        ArrayList<String> tempDialects = new ArrayList<>();
-        ArrayList<String> tempCountries = new ArrayList<>();
+    // Google dialect tag conversion -> ML Kit code (one place only)
+    public static String toMlKitCode(String dialect) {
+        if (dialect == null) return null;
+        String lang = dialect.split("-")[0].toLowerCase(Locale.ROOT);
+        switch (lang) {
+            case "cmn": case "yue": case "zh": return "zh";
+            case "fil": return "tl";
+            case "nb":  return "no";
+            default:    return lang;
+        }
+    }
 
-        // Array Anda yang sudah ada (biarkan isinya tetap sama)
-        String[][] srcLanguages = {
-                {"Afrikaans", "af-ZA"},
-                {"Albanian", "sq-AL"},
-                {"Amharic", "am-ET"},
-                {"Arabic", "ar-SA"},
-                {"Armenian", "hy-AM"},
-                {"Assamese", "as-IN"},
-                {"Azerbaijani", "az-AZ"},
-                {"Basque", "eu-ES"},
-                {"Belarusian", "be-BY"},
-                {"Bengali", "bn-BD"},
-                {"Bosnian", "bs-BA"},
-                {"Bulgarian", "bg-BG"},
-                {"Catalan", "ca-ES"},
-                {"Cebuano", "ceb"},
-                {"Chinese", "cmn-Hans-CN"},
-                {"Croatian", "hr-HR"},
-                {"Czech", "cs-CZ"},
-                {"Danish", "da-DK"},
-                {"Dutch", "nl-NL"},
-                {"English", "en-US"},
-                {"Estonian", "et-EE"},
-                {"Filipino", "fil-PH"},
-                {"Finnish", "fi-FI"},
-                {"French", "fr-FR"},
-                {"Galician", "gl-ES"},
-                {"Georgian", "ka-GE"},
-                {"German", "de-DE"},
-                {"Greek", "el-GR"},
-                {"Gujarati", "gu-IN"},
-                {"Hebrew", "he-IL"},
-                {"Hindi", "hi-IN"},
-                {"Hungarian", "hu-HU"},
-                {"Icelandic", "is-IS"},
-                {"Indonesian", "id-ID"},
-                {"Irish", "ga-IE"},
-                {"Italian", "it-IT"},
-                {"Japanese", "ja-JP"},
-                {"Javanese", "jv-ID"},
-                {"Kannada", "kn-IN"},
-                {"Kazakh", "kk-KZ"},
-                {"Khmer", "km-KH"},
-                {"Korean", "ko-KR"},
-                {"Kyrgyz", "ky-KG"},
-                {"Lao", "lo-LA"},
-                {"Latvian", "lv-LV"},
-                {"Lingala", "ln-CD"},
-                {"Lithuanian", "lt-LT"},
-                {"Malay", "ms-MY"},
-                {"Malayalam", "ml-IN"},
-                {"Maltese", "mt-MT"},
-                {"Marathi", "mr-IN"},
-                {"Macedonian", "mk-MK"},
-                {"Mongolian", "mn-MN"},
-                {"Nepali", "ne-NP"},
-                {"Norwegian Bokmål", "nb-NO"},
-                {"Persian", "fa-IR"},
-                {"Polish", "pl-PL"},
-                {"Portuguese", "pt-BR"},
-                {"Punjabi", "pa-IN"},
-                {"Romanian", "ro-RO"},
-                {"Russian", "ru-RU"},
-                {"Serbian", "sr-RS"},
-                {"Sinhala", "si-LK"},
-                {"Slovak", "sk-SK"},
-                {"Slovenian", "sl-SI"},
-                {"Spanish", "es-ES"},
-                {"Sundanese", "su-ID"},
-                {"Swahili", "sw-TZ"},
-                {"Swedish", "sv-SE"},
-                {"Tamil", "ta-IN"},
-                {"Telugu", "te-IN"},
-                {"Thai", "th-TH"},
-                {"Turkish", "tr-TR"},
-                {"Ukrainian", "uk-UA"},
-                {"Urdu", "ur-PK"},
-                {"Vietnamese", "vi-VN"},
-                {"Zulu", "zu-ZA"}
+    private void loadLocaleLanguages() {
+        final String[] tags = {
+                "af-ZA","sq-AL","am-ET","ar-SA","ar-EG","ar-AE","hy-AM","as-IN","az-AZ",
+                "eu-ES","be-BY","bn-BD","bn-IN","bs-BA","bg-BG","ca-ES","ceb",
+                "cmn-Hans-CN","cmn-Hant-TW","yue-Hant-HK",
+                "hr-HR","cs-CZ","da-DK","nl-NL","nl-BE",
+                // English: dialek
+                "en-US","en-GB","en-AU","en-CA","en-IN","en-ID","en-IE","en-NZ",
+                "en-PH","en-SG","en-ZA","en-NG","en-KE","en-GH","en-HK","en-PK","en-TZ",
+                "et-EE","fil-PH","fi-FI",
+                "fr-FR","fr-CA","fr-BE","fr-CH",
+                "gl-ES","ka-GE",
+                "de-DE","de-AT","de-CH",
+                "el-GR","gu-IN","he-IL","hi-IN","hu-HU","is-IS","id-ID","ga-IE","it-IT","it-CH",
+                "ja-JP","jv-ID","kn-IN","kk-KZ","km-KH","ko-KR","ky-KG","lo-LA","lv-LV","ln-CD",
+                "lt-LT","ms-MY","ml-IN","mt-MT","mr-IN","mk-MK","mn-MN","ne-NP","nb-NO","fa-IR",
+                "pl-PL","pt-BR","pt-PT","pa-IN","ro-RO","ru-RU","sr-RS","si-LK","sk-SK","sl-SI",
+                "es-ES","es-MX","es-US","es-AR","es-CO","es-CL","es-PE","es-VE",
+                "su-ID","sw-TZ","sw-KE","sv-SE","ta-IN","ta-LK","ta-SG","ta-MY","te-IN",
+                "th-TH","tr-TR","uk-UA","ur-PK","ur-IN","vi-VN","zu-ZA"
         };
 
-        for (String[] language : srcLanguages) {
-            String languageName = language[0];
-            String dialect = language[1];
-
-            String formattedDisplay = languageName;
-
-            String[] parts = dialect.split("-");
-
-            if (parts.length >= 2) {
-                String countryCode = parts[parts.length - 1];
-
-                Locale locale = new Locale("", countryCode);
-                String countryName = locale.getDisplayCountry(Locale.ENGLISH);
-
-                formattedDisplay = languageName + " (" + countryName + ")";
-            }
-
-            localLanguages.add(formattedDisplay);
-            tempDialects.add(dialect);
-            tempCountries.add(languageName);
+        ArrayList<String> names = new ArrayList<>();
+        ArrayList<String> tagList = new ArrayList<>();
+        for (String tag : tags) {
+            names.add(friendlyName(tag));   // "English (Australia)", "Spanish (Mexico)", dst.
+            tagList.add(tag);
         }
 
-        dialects = tempDialects.toArray(new String[0]);
-        countries = tempCountries.toArray(new String[0]);
+        dialects = tagList.toArray(new String[0]);
+        countries = names.toArray(new String[0]);
+        setup_spinner(names);
+    }
 
-        setup_spinner(localLanguages);
+    private String friendlyName(String rawTag) {
+        String tag = rawTag.replace('_', '-');
+        switch (tag) {
+            case "cmn-Hans-CN": case "zh-CN":
+                return "Chinese Simplified (China)";
+            case "cmn-Hans-HK":
+                return "Chinese Simplified (Hong Kong)";
+            case "cmn-Hant-TW": case "zh-TW":
+                return "Chinese Traditional (Taiwan)";
+            case "yue-Hant-HK":
+                return "Chinese Cantonese (Hong Kong)";
+        }
+        return Locale.forLanguageTag(tag).getDisplayName(Locale.ENGLISH).trim();
     }
 
     public static boolean isNotificationListenerEnabled(Context context) {
@@ -1003,6 +918,19 @@ public class MainActivity extends AppCompatActivity {
         pm.setComponentEnabledSetting(cn,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP);
+    }
+
+    public void setText(final TextView tv, final String text){
+        if (tv != null) {
+            new Handler(Looper.getMainLooper()).post(() -> tv.setText(text));
+            //runOnUiThread(() -> tv.setText(text));
+        }
+    }
+
+    private void appendText(final TextView tv, final String text){
+        if (tv != null) {
+            new Handler(Looper.getMainLooper()).post(() -> tv.append(text));
+        }
     }
 
 }

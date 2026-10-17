@@ -6,34 +6,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
-
 import java.util.Objects;
 
 public class create_overlay_translation_text extends Service {
 
+    public create_overlay_translation_text() {}
+
     private String TAG = "create_overlay_translation_text";
-
-    public create_overlay_translation_text() {
-    }
-
     @SuppressLint("StaticFieldLeak")
     public static GlobalOverlay mGlobalOverlay;
-
     @SuppressLint("StaticFieldLeak")
     public static View overlay_translation_text_container;
-
     @SuppressLint("StaticFieldLeak")
     public static EditText overlay_translation_text;
-
     @SuppressLint("StaticFieldLeak")
     public static View overlay_full_translation_text_container;
-
     @SuppressLint("StaticFieldLeak")
     public static EditText overlay_full_translation_text;
 
@@ -45,12 +37,7 @@ public class create_overlay_translation_text extends Service {
 
     public void onCreate() {
         super.onCreate();
-
-        Log.d(
-                "create_overlay_translation_text",
-                "Starting create_overlay_translation_text service"
-        );
-
+        Log.d("create_overlay_translation_text", "Starting create_overlay_translation_text service");
         create_translation_text_window();
     }
 
@@ -109,7 +96,7 @@ public class create_overlay_translation_text extends Service {
 
         if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
             MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-            if (!(TRANSLATION_TEXT.STRING.length() == 0)) {
+            if (TRANSLATION_TEXT.STRING.length() != 0) {
                 if (create_overlay_translation_text.overlay_translation_text_container != null) {
                     overlay_translation_text.setVisibility(View.VISIBLE);
                     overlay_translation_text_container.setVisibility(View.VISIBLE);
@@ -121,9 +108,11 @@ public class create_overlay_translation_text extends Service {
             //MainActivity.audio.setStreamVolume(AudioManager.STREAM_MUSIC, MainActivity.mMusicVolume, 0);
             Log.d(TAG, "create_translation_text_window: mStreamVolume = " + MainActivity.mStreamVolume);
             //Log.d(TAG, "create_translation_text_window: mMusicVolume = " + MainActivity.mMusicVolume);
-            if (create_overlay_translation_text.overlay_translation_text_container != null) {
+            if (overlay_translation_text_container != null) {
                 overlay_translation_text.setVisibility(View.INVISIBLE);
                 overlay_translation_text_container.setVisibility(View.INVISIBLE);
+            }
+            if (overlay_full_translation_text_container != null) {
                 overlay_full_translation_text.setVisibility(View.INVISIBLE);
                 overlay_full_translation_text_container.setVisibility(View.INVISIBLE);
             }

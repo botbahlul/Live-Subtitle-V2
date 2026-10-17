@@ -56,17 +56,15 @@ public class create_overlay_translation_text extends Service {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         if (mGlobalOverlay != null) {
             mGlobalOverlay.destroy();
             mGlobalOverlay = null;
         }
-
         overlay_translation_text_container = null;
         overlay_translation_text = null;
         overlay_full_translation_text_container = null;
         overlay_full_translation_text = null;
-
-        super.onDestroy();
     }
 
     @SuppressLint("InflateParams")
@@ -111,19 +109,12 @@ public class create_overlay_translation_text extends Service {
 
         if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
             MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
-
-            if (TRANSLATION_TEXT.STRING.length() == 0) {
-                if (overlay_translation_text_container != null) {
-                    overlay_translation_text.setVisibility(View.INVISIBLE);
-                    overlay_translation_text_container.setVisibility(View.INVISIBLE);
-                }
-            } else {
+            if (!(TRANSLATION_TEXT.STRING.length() == 0)) {
                 if (create_overlay_translation_text.overlay_translation_text_container != null) {
                     overlay_translation_text.setVisibility(View.VISIBLE);
                     overlay_translation_text_container.setVisibility(View.VISIBLE);
                 }
             }
-
         } else {
             //MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, MainActivity.mStreamVolume, 0);
             MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, MainActivity.mStreamVolume, 0);
@@ -159,7 +150,7 @@ public class create_overlay_translation_text extends Service {
                 overlayWidth,
                 overlayHeight,
                 0,
-                fullTranslationY,
+                fullTranslationY - 8,
                 null,
                 null,
                 new GlobalOverlay.OnRemoveOverlayListener() {
@@ -173,7 +164,7 @@ public class create_overlay_translation_text extends Service {
                 overlayWidth,
                 overlayHeight,
                 0,
-                translationY-4,
+                translationY,
                 null,
                 null,
                 new GlobalOverlay.OnRemoveOverlayListener() {

@@ -11,6 +11,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,6 +46,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import android.service.notification.NotificationListenerService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -98,6 +102,18 @@ public class MainActivity extends AppCompatActivity {
         return NotificationManagerCompat.getEnabledListenerPackages(this).contains(pkgName);
     }
 
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private final Runnable checkConnection = new Runnable() {
+        @Override
+        public void run() {
+            if (!MyNotificationListenerService.isConnected) {
+                Log.w("MainActivity", "Listener belum connected, forceRebind()");
+                MyNotificationListenerService.forceRebind(MainActivity.this);
+            }
+        }
+    };
+
     @SuppressLint({"ClickableViewAccessibility", "QueryPermissionsNeeded", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
         textview_dst = findViewById(R.id.textview_dst);
         full_voice_text = findViewById(R.id.full_voice_text);
         voice_text = findViewById(R.id.voice_text);
+
         textview_recognizing = findViewById(R.id.textview_recognizing);
         textview_overlaying = findViewById(R.id.textview_overlaying);
         textview_debug = findViewById(R.id.textview_debug);
@@ -197,6 +214,10 @@ public class MainActivity extends AppCompatActivity {
             Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
             startActivity(i);
         }
+
+        Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        i.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(i);
 
         checkbox_debug_mode.setOnClickListener(view -> {
             if(((CompoundButton) view).isChecked()){
@@ -675,9 +696,10 @@ public class MainActivity extends AppCompatActivity {
                     setText(textview_output_messages, "");
                     VOICE_TEXT.STRING = "";
                     TRANSLATION_TEXT.STRING = "";
-                    setText(voice_text, "");
-                    voice_text.setHint("Recognized words");
-                    full_voice_text.setHint("Recognized sentences");
+                    MainActivity.voice_text.setText("");
+                    MainActivity.voice_text.setHint("Recognized words");
+                    MainActivity.full_voice_text.setText("");
+                    MainActivity.full_voice_text.setHint("Recognized sentences");
                     audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
                     //audio.setStreamVolume(AudioManager.STREAM_MUSIC, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2))), 0);
                     if (create_overlay_translation_text.overlay_translation_text != null) {
@@ -689,15 +711,10 @@ public class MainActivity extends AppCompatActivity {
                         create_overlay_mic_button.mic_button.setVisibility(View.INVISIBLE);
                     }
                     setText(textview_output_messages, "");
-                    VOICE_TEXT.STRING = "";
-                    TRANSLATION_TEXT.STRING = "";
-                    setText(voice_text, "");
                     RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                     setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
                     MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
                     setText(textview_overlaying, MIC_BUTTON_STATUS.STRING);
-                    voice_text.setHint("Recognized words");
-                    full_voice_text.setHint("Recognized sentences");
                 }
             }
             return false;
@@ -729,6 +746,26 @@ public class MainActivity extends AppCompatActivity {
         //Log.d(TAG, "onDestroy: mMusicVolume = " + mMusicVolume);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (!MyNotificationListenerService.isEnabled(this)) {
+            // Arahkan user ke Settings lewat tombol/dialog, jangan otomatis tiap onResume
+            return;
+        }
+
+        // Beri waktu 1,5 detik agar sistem sempat bind sendiri; jika belum, paksa
+        handler.removeCallbacks(checkConnection);
+        handler.postDelayed(checkConnection, 1500);
+    }
+
+    @Override
+    protected void onPause() {
+        handler.removeCallbacks(checkConnection);
+        super.onPause();
+    }
+
     private int getSpinnerIndexByCode(ArrayList<String> supportedLanguages, String targetCode) {
         if (targetCode == null || targetCode.isEmpty()) return 0;
 
@@ -749,24 +786,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return 0;
-    }
-
-    public void setup_spinner(ArrayList<String> supported_languages) {
-        countries_dialects = new HashMap<>();
-        for (int i = 0; i < supported_languages.size(); i++) {
-            countries_dialects.put(supported_languages.get(i), dialects[i]);
-        }
-
-        Collections.sort(supported_languages);
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_textview_align, supported_languages);
-        adapter.setDropDownViewResource(R.layout.spinner_textview_align);
-
-        spinner_src_languages.setAdapter(adapter);
-        spinner_dst_languages.setAdapter(adapter);
-
-        spinner_src_languages.setSelection(getSpinnerIndexByCode(supported_languages, "id"));
-        spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
     }
 
     private void start_create_overlay_mic_button() {
@@ -816,6 +835,24 @@ public class MainActivity extends AppCompatActivity {
         if (tv != null) {
             new Handler(Looper.getMainLooper()).post(() -> tv.append(text));
         }
+    }
+
+    public void setup_spinner(ArrayList<String> supported_languages) {
+        countries_dialects = new HashMap<>();
+        for (int i = 0; i < supported_languages.size(); i++) {
+            countries_dialects.put(supported_languages.get(i), dialects[i]);
+        }
+
+        Collections.sort(supported_languages);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_textview_align, supported_languages);
+        adapter.setDropDownViewResource(R.layout.spinner_textview_align);
+
+        spinner_src_languages.setAdapter(adapter);
+        spinner_dst_languages.setAdapter(adapter);
+
+        spinner_src_languages.setSelection(getSpinnerIndexByCode(supported_languages, "id"));
+        spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
     }
 
     private void loadLocaleLanguages() {
@@ -930,6 +967,42 @@ public class MainActivity extends AppCompatActivity {
         countries = tempCountries.toArray(new String[0]);
 
         setup_spinner(localLanguages);
+    }
+
+    public static boolean isNotificationListenerEnabled(Context context) {
+        String flat = Settings.Secure.getString(
+                context.getContentResolver(), "enabled_notification_listeners");
+        if (flat == null || flat.isEmpty()) return false;
+
+        for (String name : flat.split(":")) {
+            ComponentName cn = ComponentName.unflattenFromString(name);
+            if (cn != null && cn.getPackageName().equals(context.getPackageName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void requestRebind(Context context) {
+        if (!isNotificationListenerEnabled(context)) return;
+
+        ComponentName cn = new ComponentName(context, MyNotificationListenerService.class);
+        // API 24+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            NotificationListenerService.requestRebind(cn);
+        }
+    }
+
+    public static void toggleNotificationListenerService(Context context) {
+        PackageManager pm = context.getPackageManager();
+        ComponentName cn = new ComponentName(context, MyNotificationListenerService.class);
+
+        pm.setComponentEnabledSetting(cn,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+        pm.setComponentEnabledSetting(cn,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
 }

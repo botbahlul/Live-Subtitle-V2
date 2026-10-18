@@ -16,7 +16,6 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.graphics.Color;
 
 import java.util.HashMap;
 import java.util.Map;

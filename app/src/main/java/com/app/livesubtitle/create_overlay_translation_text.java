@@ -48,10 +48,10 @@ public class create_overlay_translation_text extends Service {
             mGlobalOverlay.destroy();
             mGlobalOverlay = null;
         }
-        overlay_translation_text_container = null;
-        overlay_translation_text = null;
-        overlay_full_translation_text_container = null;
-        overlay_full_translation_text = null;
+        if (overlay_translation_text_container != null) overlay_translation_text_container = null;
+        if (overlay_translation_text != null) overlay_translation_text = null;
+        if (overlay_full_translation_text_container != null) overlay_full_translation_text_container = null;
+        if (overlay_full_translation_text != null) overlay_full_translation_text = null;
     }
 
     @SuppressLint("InflateParams")

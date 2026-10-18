@@ -151,8 +151,6 @@ public class create_overlay_mic_button extends Service {
                                 if (create_overlay_translation_text.overlay_translation_text_container != null) {
                                     create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
                                     create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                                    create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
-                                    create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
                                 }
                             }
                         }

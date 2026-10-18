@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_src;
     private Spinner spinner_dst_languages;
-    private TextView textview_dst_dialect;
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_dst;
     @SuppressLint("StaticFieldLeak")
@@ -77,20 +76,26 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     public static TextView textview_output_messages;
 
-    private ArrayList<String> arraylist_languages;
-    private String [] countries;
-    private String [] dialects;
-    private Map<String, String> countries_dialects;
+    ArrayList<String> arraylist_src_languages;
+    String [] src_countries;
+    String [] src_dialects;
+    Map<String, String> src_countries_dialect;
+
+    ArrayList<String> arraylist_dst_languages = new ArrayList<>();
+    ArrayList<String> arraylist_dst_code = new ArrayList<>();
+    Map<String, String> map_dst_country = new HashMap<>();
+
     private DisplayMetrics display;
     //DON'T FORGET TO MODIFY AndroidManifest.xml
     //         <activity
     //            android:name=".MainActivity"
     //            android:configChanges="keyboardHidden|screenSize|orientation|screenLayout|navigation"
 
+
     @SuppressLint("StaticFieldLeak")
     public static AudioManager audio;
 
-    private String TAG = "MainActivity";;
+    private String TAG = "MainActivity";
     public static int mStreamVolume;
     //public static int mMusicVolume;
 
@@ -128,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
         Button button_toggle_overlay = findViewById(R.id.button_toggle_overlay);
         textview_src_dialect = findViewById(R.id.textview_src_dialect);
         textview_src = findViewById(R.id.textview_src);
-        textview_dst_dialect = findViewById(R.id.textview_dst_dialect);
         textview_dst = findViewById(R.id.textview_dst);
         full_voice_text = findViewById(R.id.full_voice_text);
         voice_text = findViewById(R.id.voice_text);
@@ -137,6 +141,280 @@ public class MainActivity extends AppCompatActivity {
         textview_overlaying = findViewById(R.id.textview_overlaying);
         textview_debug = findViewById(R.id.textview_debug);
         textview_output_messages = findViewById(R.id.textview_output_messages);
+
+        arraylist_dst_code.add("af");
+        arraylist_dst_code.add("sq");
+        arraylist_dst_code.add("am");
+        arraylist_dst_code.add("ar");
+        arraylist_dst_code.add("hy");
+        arraylist_dst_code.add("as");
+        arraylist_dst_code.add("ay");
+        arraylist_dst_code.add("az");
+        arraylist_dst_code.add("bm");
+        arraylist_dst_code.add("eu");
+        arraylist_dst_code.add("be");
+        arraylist_dst_code.add("bn");
+        arraylist_dst_code.add("bho");
+        arraylist_dst_code.add("bs");
+        arraylist_dst_code.add("bg");
+        arraylist_dst_code.add("ca");
+        arraylist_dst_code.add("ceb");
+        arraylist_dst_code.add("ny");
+        arraylist_dst_code.add("zh");
+        arraylist_dst_code.add("zh-CN");
+        arraylist_dst_code.add("zh-TW");
+        arraylist_dst_code.add("co");
+        arraylist_dst_code.add("hr");
+        arraylist_dst_code.add("cs");
+        arraylist_dst_code.add("da");
+        arraylist_dst_code.add("dv");
+        arraylist_dst_code.add("doi");
+        arraylist_dst_code.add("nl");
+        arraylist_dst_code.add("en");
+        arraylist_dst_code.add("eo");
+        arraylist_dst_code.add("et");
+        arraylist_dst_code.add("ee");
+        arraylist_dst_code.add("fil");
+        arraylist_dst_code.add("fi");
+        arraylist_dst_code.add("fr");
+        arraylist_dst_code.add("fy");
+        arraylist_dst_code.add("gl");
+        arraylist_dst_code.add("ka");
+        arraylist_dst_code.add("de");
+        arraylist_dst_code.add("el");
+        arraylist_dst_code.add("gn");
+        arraylist_dst_code.add("gu");
+        arraylist_dst_code.add("ht");
+        arraylist_dst_code.add("ha");
+        arraylist_dst_code.add("haw");
+        arraylist_dst_code.add("he");
+        arraylist_dst_code.add("hi");
+        arraylist_dst_code.add("hmn");
+        arraylist_dst_code.add("hu");
+        arraylist_dst_code.add("is");
+        arraylist_dst_code.add("ig");
+        arraylist_dst_code.add("ilo");
+        arraylist_dst_code.add("id");
+        arraylist_dst_code.add("ga");
+        arraylist_dst_code.add("it");
+        arraylist_dst_code.add("ja");
+        arraylist_dst_code.add("jv");
+        arraylist_dst_code.add("kn");
+        arraylist_dst_code.add("kk");
+        arraylist_dst_code.add("km");
+        arraylist_dst_code.add("rw");
+        arraylist_dst_code.add("gom");
+        arraylist_dst_code.add("ko");
+        arraylist_dst_code.add("kri");
+        arraylist_dst_code.add("kmr");
+        arraylist_dst_code.add("ckb");
+        arraylist_dst_code.add("ky");
+        arraylist_dst_code.add("lo");
+        arraylist_dst_code.add("la");
+        arraylist_dst_code.add("lv");
+        arraylist_dst_code.add("ln");
+        arraylist_dst_code.add("lt");
+        arraylist_dst_code.add("lg");
+        arraylist_dst_code.add("lb");
+        arraylist_dst_code.add("mk");
+        arraylist_dst_code.add("mg");
+        arraylist_dst_code.add("ms");
+        arraylist_dst_code.add("ml");
+        arraylist_dst_code.add("mt");
+        arraylist_dst_code.add("mi");
+        arraylist_dst_code.add("mr");
+        arraylist_dst_code.add("mni-Mtei");
+        arraylist_dst_code.add("lus");
+        arraylist_dst_code.add("mn");
+        arraylist_dst_code.add("my");
+        arraylist_dst_code.add("ne");
+        arraylist_dst_code.add("no");
+        arraylist_dst_code.add("or");
+        arraylist_dst_code.add("om");
+        arraylist_dst_code.add("ps");
+        arraylist_dst_code.add("fa");
+        arraylist_dst_code.add("pl");
+        arraylist_dst_code.add("pt");
+        arraylist_dst_code.add("pa");
+        arraylist_dst_code.add("qu");
+        arraylist_dst_code.add("ro");
+        arraylist_dst_code.add("ru");
+        arraylist_dst_code.add("sm");
+        arraylist_dst_code.add("sa");
+        arraylist_dst_code.add("gd");
+        arraylist_dst_code.add("nso");
+        arraylist_dst_code.add("sr");
+        arraylist_dst_code.add("st");
+        arraylist_dst_code.add("sn");
+        arraylist_dst_code.add("sd");
+        arraylist_dst_code.add("si");
+        arraylist_dst_code.add("sk");
+        arraylist_dst_code.add("sl");
+        arraylist_dst_code.add("so");
+        arraylist_dst_code.add("es");
+        arraylist_dst_code.add("su");
+        arraylist_dst_code.add("sw");
+        arraylist_dst_code.add("sv");
+        arraylist_dst_code.add("tg");
+        arraylist_dst_code.add("ta");
+        arraylist_dst_code.add("tt");
+        arraylist_dst_code.add("te");
+        arraylist_dst_code.add("th");
+        arraylist_dst_code.add("ti");
+        arraylist_dst_code.add("ts");
+        arraylist_dst_code.add("tr");
+        arraylist_dst_code.add("tk");
+        arraylist_dst_code.add("tw");
+        arraylist_dst_code.add("uk");
+        arraylist_dst_code.add("ur");
+        arraylist_dst_code.add("ug");
+        arraylist_dst_code.add("uz");
+        arraylist_dst_code.add("vi");
+        arraylist_dst_code.add("cy");
+        arraylist_dst_code.add("xh");
+        arraylist_dst_code.add("yi");
+        arraylist_dst_code.add("yo");
+        arraylist_dst_code.add("zu");
+
+        arraylist_dst_languages.add("Afrikaans");
+        arraylist_dst_languages.add("Albanian");
+        arraylist_dst_languages.add("Amharic");
+        arraylist_dst_languages.add("Arabic");
+        arraylist_dst_languages.add("Armenian");
+        arraylist_dst_languages.add("Assamese");
+        arraylist_dst_languages.add("Aymara");
+        arraylist_dst_languages.add("Azerbaijani");
+        arraylist_dst_languages.add("Bambara");
+        arraylist_dst_languages.add("Basque");
+        arraylist_dst_languages.add("Belarusian");
+        arraylist_dst_languages.add("Bengali");
+        arraylist_dst_languages.add("Bhojpuri");
+        arraylist_dst_languages.add("Bosnian");
+        arraylist_dst_languages.add("Bulgarian");
+        arraylist_dst_languages.add("Catalan");
+        arraylist_dst_languages.add("Cebuano");
+        arraylist_dst_languages.add("Chichewa");
+        arraylist_dst_languages.add("Chinese");
+        arraylist_dst_languages.add("Chinese (Simplified)");
+        arraylist_dst_languages.add("Chinese (Traditional)");
+        arraylist_dst_languages.add("Corsican");
+        arraylist_dst_languages.add("Croatian");
+        arraylist_dst_languages.add("Czech");
+        arraylist_dst_languages.add("Danish");
+        arraylist_dst_languages.add("Dhivehi");
+        arraylist_dst_languages.add("Dogri");
+        arraylist_dst_languages.add("Dutch");
+        arraylist_dst_languages.add("English");
+        arraylist_dst_languages.add("Esperanto");
+        arraylist_dst_languages.add("Estonian");
+        arraylist_dst_languages.add("Ewe");
+        arraylist_dst_languages.add("Filipino");
+        arraylist_dst_languages.add("Finnish");
+        arraylist_dst_languages.add("French");
+        arraylist_dst_languages.add("Frisian");
+        arraylist_dst_languages.add("Galician");
+        arraylist_dst_languages.add("Georgian");
+        arraylist_dst_languages.add("German");
+        arraylist_dst_languages.add("Greek");
+        arraylist_dst_languages.add("Guarani");
+        arraylist_dst_languages.add("Gujarati");
+        arraylist_dst_languages.add("Haitian Creole");
+        arraylist_dst_languages.add("Hausa");
+        arraylist_dst_languages.add("Hawaiian");
+        arraylist_dst_languages.add("Hebrew");
+        arraylist_dst_languages.add("Hindi");
+        arraylist_dst_languages.add("Hmong");
+        arraylist_dst_languages.add("Hungarian");
+        arraylist_dst_languages.add("Icelandic");
+        arraylist_dst_languages.add("Igbo");
+        arraylist_dst_languages.add("Ilocano");
+        arraylist_dst_languages.add("Indonesian");
+        arraylist_dst_languages.add("Irish");
+        arraylist_dst_languages.add("Italian");
+        arraylist_dst_languages.add("Japanese");
+        arraylist_dst_languages.add("Javanese");
+        arraylist_dst_languages.add("Kannada");
+        arraylist_dst_languages.add("Kazakh");
+        arraylist_dst_languages.add("Khmer");
+        arraylist_dst_languages.add("Kinyarwanda");
+        arraylist_dst_languages.add("Konkani");
+        arraylist_dst_languages.add("Korean");
+        arraylist_dst_languages.add("Krio");
+        arraylist_dst_languages.add("Kurdish (Kurmanji)");
+        arraylist_dst_languages.add("Kurdish (Sorani)");
+        arraylist_dst_languages.add("Kyrgyz");
+        arraylist_dst_languages.add("Lao");
+        arraylist_dst_languages.add("Latin");
+        arraylist_dst_languages.add("Latvian");
+        arraylist_dst_languages.add("Lingala");
+        arraylist_dst_languages.add("Lithuanian");
+        arraylist_dst_languages.add("Luganda");
+        arraylist_dst_languages.add("Luxembourgish");
+        arraylist_dst_languages.add("Macedonian");
+        arraylist_dst_languages.add("Malagasy");
+        arraylist_dst_languages.add("Malay");
+        arraylist_dst_languages.add("Malayalam");
+        arraylist_dst_languages.add("Maltese");
+        arraylist_dst_languages.add("Maori");
+        arraylist_dst_languages.add("Marathi");
+        arraylist_dst_languages.add("Meiteilon (Manipuri)");
+        arraylist_dst_languages.add("Mizo");
+        arraylist_dst_languages.add("Mongolian");
+        arraylist_dst_languages.add("Myanmar (Burmese)");
+        arraylist_dst_languages.add("Nepali");
+        arraylist_dst_languages.add("Norwegian");
+        arraylist_dst_languages.add("Odiya (Oriya)");
+        arraylist_dst_languages.add("Oromo");
+        arraylist_dst_languages.add("Pashto");
+        arraylist_dst_languages.add("Persian");
+        arraylist_dst_languages.add("Polish");
+        arraylist_dst_languages.add("Portuguese");
+        arraylist_dst_languages.add("Punjabi");
+        arraylist_dst_languages.add("Quechua");
+        arraylist_dst_languages.add("Romanian");
+        arraylist_dst_languages.add("Russian");
+        arraylist_dst_languages.add("Samoan");
+        arraylist_dst_languages.add("Sanskrit");
+        arraylist_dst_languages.add("Scots Gaelic");
+        arraylist_dst_languages.add("Sepedi");
+        arraylist_dst_languages.add("Serbian");
+        arraylist_dst_languages.add("Sesotho");
+        arraylist_dst_languages.add("Shona");
+        arraylist_dst_languages.add("Sindhi");
+        arraylist_dst_languages.add("Sinhala");
+        arraylist_dst_languages.add("Slovak");
+        arraylist_dst_languages.add("Slovenian");
+        arraylist_dst_languages.add("Somali");
+        arraylist_dst_languages.add("Spanish");
+        arraylist_dst_languages.add("Sundanese");
+        arraylist_dst_languages.add("Swahili");
+        arraylist_dst_languages.add("Swedish");
+        arraylist_dst_languages.add("Tajik");
+        arraylist_dst_languages.add("Tamil");
+        arraylist_dst_languages.add("Tatar");
+        arraylist_dst_languages.add("Telugu");
+        arraylist_dst_languages.add("Thai");
+        arraylist_dst_languages.add("Tigrinya");
+        arraylist_dst_languages.add("Tsonga");
+        arraylist_dst_languages.add("Turkish");
+        arraylist_dst_languages.add("Turkmen");
+        arraylist_dst_languages.add("Twi (Akan)");
+        arraylist_dst_languages.add("Ukrainian");
+        arraylist_dst_languages.add("Urdu");
+        arraylist_dst_languages.add("Uyghur");
+        arraylist_dst_languages.add("Uzbek");
+        arraylist_dst_languages.add("Vietnamese");
+        arraylist_dst_languages.add("Welsh");
+        arraylist_dst_languages.add("Xhosa");
+        arraylist_dst_languages.add("Yiddish");
+        arraylist_dst_languages.add("Yoruba");
+        arraylist_dst_languages.add("Zulu");
+
+        for (int i = 0; i < arraylist_dst_languages.size(); i++) {
+            map_dst_country.put(arraylist_dst_languages.get(i), arraylist_dst_code.get(i));
+        }
+
+        setup_dst_spinner(arraylist_dst_languages);
 
         VOICE_TEXT.STRING = "";
         TRANSLATION_TEXT.STRING = "";
@@ -223,7 +501,6 @@ public class MainActivity extends AppCompatActivity {
             if(((CompoundButton) view).isChecked()){
                 textview_src_dialect.setVisibility(View.VISIBLE);
                 textview_src.setVisibility(View.VISIBLE);
-                textview_dst_dialect.setVisibility(View.VISIBLE);
                 textview_dst.setVisibility(View.VISIBLE);
                 textview_recognizing.setVisibility(View.VISIBLE);
                 textview_overlaying.setVisibility(View.VISIBLE);
@@ -244,14 +521,6 @@ public class MainActivity extends AppCompatActivity {
                     textview_src.setHint("LANGUAGE.SRC");
                 }
 
-                if (LANGUAGE.DST_DIALECT != null) {
-                    String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
-                    textview_dst_dialect.setText(ldd);
-                }
-                else {
-                    textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
-                }
-
                 if (LANGUAGE.DST != null) {
                     String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
                     textview_dst.setText(ld);
@@ -263,7 +532,6 @@ public class MainActivity extends AppCompatActivity {
             else {
                 textview_src_dialect.setVisibility(View.GONE);
                 textview_src.setVisibility(View.GONE);
-                textview_dst_dialect.setVisibility(View.GONE);
                 textview_dst.setVisibility(View.GONE);
                 textview_recognizing.setVisibility(View.GONE);
                 textview_overlaying.setVisibility(View.GONE);
@@ -274,7 +542,6 @@ public class MainActivity extends AppCompatActivity {
         if(checkbox_debug_mode.isChecked()){
             textview_src_dialect.setVisibility(View.VISIBLE);
             textview_src.setVisibility(View.VISIBLE);
-            textview_dst_dialect.setVisibility(View.VISIBLE);
             textview_dst.setVisibility(View.VISIBLE);
             textview_recognizing.setVisibility(View.VISIBLE);
             textview_overlaying.setVisibility(View.VISIBLE);
@@ -295,14 +562,6 @@ public class MainActivity extends AppCompatActivity {
                 textview_src.setHint("LANGUAGE.SRC");
             }
 
-            if (LANGUAGE.DST_DIALECT != null) {
-                String ldd = "LANGUAGE.DST_DIALECT = " + LANGUAGE.DST_DIALECT;
-                textview_dst_dialect.setText(ldd);
-            }
-            else {
-                textview_dst_dialect.setHint("LANGUAGE.DST_DIALECT");
-            }
-
             if (LANGUAGE.DST != null) {
                 String ld = "LANGUAGE.DST = " + LANGUAGE.DST;
                 textview_dst.setText(ld);
@@ -315,7 +574,6 @@ public class MainActivity extends AppCompatActivity {
         else {
             textview_src_dialect.setVisibility(View.GONE);
             textview_src.setVisibility(View.GONE);
-            textview_dst_dialect.setVisibility(View.GONE);
             textview_dst.setVisibility(View.GONE);
             textview_recognizing.setVisibility(View.GONE);
             textview_overlaying.setVisibility(View.GONE);
@@ -367,26 +625,26 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d("MainActivity", "extra = " + extra);
                         if (extra != null && extra.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)) {
-                            arraylist_languages = extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
+                            arraylist_src_languages = extra.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
 
-                            if (arraylist_languages != null && !arraylist_languages.isEmpty()) {
-                                dialects = arraylist_languages.toArray(new String[0]);
-                                for (int i = 0; i < dialects.length; i++) {
-                                    dialects[i] = dialects[i].trim();
+                            if (arraylist_src_languages != null && !arraylist_src_languages.isEmpty()) {
+                                src_dialects = arraylist_src_languages.toArray(new String[0]);
+                                for (int i = 0; i < src_dialects.length; i++) {
+                                    src_dialects[i] = src_dialects[i].trim();
                                 }
 
                                 ArrayList<String> displayLanguages = new ArrayList<>();
-                                for (int i = 0; i < arraylist_languages.size(); i++) {
-                                    String rawTag = arraylist_languages.get(i);
+                                for (int i = 0; i < arraylist_src_languages.size(); i++) {
+                                    String rawTag = arraylist_src_languages.get(i);
                                     Locale locale = Locale.forLanguageTag(rawTag.replace("_", "-"));
-                                    displayLanguages.add(friendlyName(arraylist_languages.get(i)));
+                                    displayLanguages.add(friendlyName(arraylist_src_languages.get(i)));
                                 }
 
-                                countries = displayLanguages.toArray(new String[0]);
-                                for (int i = 0; i < countries.length; i++) {
-                                    countries[i] = countries[i].trim();
+                                src_countries = displayLanguages.toArray(new String[0]);
+                                for (int i = 0; i < src_countries.length; i++) {
+                                    src_countries[i] = src_countries[i].trim();
                                 }
-                                setup_spinner(displayLanguages);
+                                setup_src_spinner(displayLanguages);
                             } else {
                                 loadLocaleLanguages();
                             }
@@ -404,7 +662,7 @@ public class MainActivity extends AppCompatActivity {
         spinner_src_languages.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String src_country = spinner_src_languages.getSelectedItem().toString();
-                LANGUAGE.SRC_DIALECT = countries_dialects.get(src_country);
+                LANGUAGE.SRC_DIALECT = src_countries_dialect.get(src_country);
                 if (LANGUAGE.SRC_DIALECT != null) {
                     LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
                     switch (LANGUAGE.SRC_DIALECT) {
@@ -425,7 +683,7 @@ public class MainActivity extends AppCompatActivity {
                 setText(textview_src, LANGUAGE.SRC);
 
                 String dst_country = spinner_dst_languages.getSelectedItem().toString();
-                LANGUAGE.DST_DIALECT = countries_dialects.get(dst_country);
+                LANGUAGE.DST_DIALECT = src_countries_dialect.get(dst_country);
                 if (LANGUAGE.DST_DIALECT != null) {
                     LANGUAGE.DST = LANGUAGE.DST_DIALECT.split("-")[0];
                     switch (LANGUAGE.DST_DIALECT) {
@@ -442,7 +700,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                setText(textview_dst_dialect, LANGUAGE.DST_DIALECT);
                 setText(textview_dst, LANGUAGE.DST);
 
                 int h;
@@ -479,7 +736,7 @@ public class MainActivity extends AppCompatActivity {
 
             public void onNothingSelected(AdapterView<?> adapterView) {
                 String src_country = spinner_src_languages.getSelectedItem().toString();
-                LANGUAGE.SRC_DIALECT = countries_dialects.get(src_country);
+                LANGUAGE.SRC_DIALECT = src_countries_dialect.get(src_country);
                 if (LANGUAGE.SRC_DIALECT != null) {
                     LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
                     switch (LANGUAGE.SRC_DIALECT) {
@@ -499,7 +756,7 @@ public class MainActivity extends AppCompatActivity {
                 setText(textview_src, LANGUAGE.SRC);
 
                 String dst_country = spinner_dst_languages.getSelectedItem().toString();
-                LANGUAGE.DST_DIALECT = countries_dialects.get(dst_country);
+                LANGUAGE.DST_DIALECT = src_countries_dialect.get(dst_country);
                 if (LANGUAGE.DST_DIALECT != null) {
                     LANGUAGE.DST = LANGUAGE.DST_DIALECT.split("-")[0];
                     switch (LANGUAGE.DST_DIALECT) {
@@ -515,53 +772,25 @@ public class MainActivity extends AppCompatActivity {
                             break;
                     }
                 }
-                setText(textview_dst_dialect, LANGUAGE.DST_DIALECT);
                 setText(textview_dst, LANGUAGE.DST);
             }
         });
 
         spinner_dst_languages.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String src_country = spinner_src_languages.getSelectedItem().toString();
-                LANGUAGE.SRC_DIALECT = countries_dialects.get(src_country);
-                if (LANGUAGE.SRC_DIALECT != null) {
-                    LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
-                    switch (LANGUAGE.SRC_DIALECT) {
-                        case "yue-Hant-HK":
-                        case "cmn-Hant-TW":
-                            //LANGUAGE.SRC = "zh-Hant";
-                            LANGUAGE.SRC = "zh-TW";
-                            break;
-                        case "cmn-Hans-CN":
-                        case "cmn-Hans-HK":
-                            //LANGUAGE.SRC = "zh-Hans";
-                            LANGUAGE.SRC = "zh-CN";
-                            break;
+                if (spinner_src_languages != null && spinner_src_languages.getSelectedItem() != null) {
+                    LANGUAGE.SRC_COUNTRY = spinner_src_languages.getSelectedItem().toString();
+                    LANGUAGE.SRC_DIALECT = src_countries_dialect.get(LANGUAGE.SRC_COUNTRY);
+                    if (LANGUAGE.SRC_DIALECT != null) {
+                        LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
                     }
+                    setText(textview_src, LANGUAGE.SRC);
                 }
-                setText(textview_src_dialect, LANGUAGE.SRC_DIALECT);
-                setText(textview_src, LANGUAGE.SRC);
-
-                String dst_country = spinner_dst_languages.getSelectedItem().toString();
-                LANGUAGE.DST_DIALECT = countries_dialects.get(dst_country);
-                if (LANGUAGE.DST_DIALECT != null) {
-                    LANGUAGE.DST = LANGUAGE.DST_DIALECT.split("-")[0];
-                    switch (LANGUAGE.DST_DIALECT) {
-                        case "yue-Hant-HK":
-                        case "cmn-Hant-TW":
-                            //LANGUAGE.DST = "zh-Hant";
-                            LANGUAGE.DST = "zh-TW";
-                            break;
-                        case "cmn-Hans-CN":
-                        case "cmn-Hans-HK":
-                            //LANGUAGE.DST = "zh-Hans";
-                            LANGUAGE.DST = "zh-CN";
-                            break;
-                    }
+                if (spinner_dst_languages != null && spinner_dst_languages.getSelectedItem() != null) {
+                    LANGUAGE.DST_COUNTRY = spinner_dst_languages.getSelectedItem().toString();
+                    LANGUAGE.DST = map_dst_country.get(LANGUAGE.DST_COUNTRY);
+                    setText(textview_dst, LANGUAGE.DST);
                 }
-                setText(textview_dst_dialect, LANGUAGE.DST_DIALECT);
-                setText(textview_dst, LANGUAGE.DST);
-
                 int h;
                 if (Objects.equals(LANGUAGE.DST, "ja") || Objects.equals(LANGUAGE.DST, "zh-Hans") || Objects.equals(LANGUAGE.DST, "zh-Hant")) {
                     h = 75;
@@ -571,68 +800,22 @@ public class MainActivity extends AppCompatActivity {
                 }
                 voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
                 full_voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
-
-                stop_voice_recognizer();
-                stop_create_overlay_translation_text();
-                stop_create_overlay_mic_button();
-                if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
-                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                        if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
-                    } else {
-                        start_voice_recognizer();
-                        if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_on);
-                    }
-                    start_create_overlay_mic_button();
-                    if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setBackgroundColor(Color.parseColor("#80000000"));
-
-                    start_create_overlay_translation_text();
-                }
-                RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
-                setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
-                MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
-                textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
             }
-
+            @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-                String src_country = spinner_src_languages.getSelectedItem().toString();
-                LANGUAGE.SRC_DIALECT = countries_dialects.get(src_country);
-                if (LANGUAGE.SRC_DIALECT != null) {
-                    LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
-                    switch (LANGUAGE.SRC_DIALECT) {
-                        case "yue-Hant-HK":
-                        case "cmn-Hant-TW":
-                            //LANGUAGE.SRC = "zh-Hant";
-                            LANGUAGE.SRC = "zh-TW";
-                            break;
-                        case "cmn-Hans-CN":
-                        case "cmn-Hans-HK":
-                            //LANGUAGE.SRC = "zh-Hans";
-                            LANGUAGE.SRC = "zh-CN";
-                            break;
+                if (spinner_src_languages != null && spinner_src_languages.getSelectedItem() != null) {
+                    LANGUAGE.SRC_COUNTRY = spinner_src_languages.getSelectedItem().toString();
+                    LANGUAGE.SRC_DIALECT = src_countries_dialect.get(LANGUAGE.SRC_COUNTRY);
+                    if (LANGUAGE.SRC_DIALECT != null) {
+                        LANGUAGE.SRC = LANGUAGE.SRC_DIALECT.split("-")[0];
                     }
+                    setText(textview_src, LANGUAGE.SRC);
                 }
-                setText(textview_src_dialect, LANGUAGE.SRC_DIALECT);
-                setText(textview_src, LANGUAGE.SRC);
-
-                String dst_country = spinner_dst_languages.getSelectedItem().toString();
-                LANGUAGE.DST_DIALECT = countries_dialects.get(dst_country);
-                if (LANGUAGE.DST_DIALECT != null) {
-                    LANGUAGE.DST = LANGUAGE.DST_DIALECT.split("-")[0];
-                    switch (LANGUAGE.DST_DIALECT) {
-                        case "yue-Hant-HK":
-                        case "cmn-Hant-TW":
-                            //LANGUAGE.DST = "zh-Hant";
-                            LANGUAGE.DST = "zh-TW";
-                            break;
-                        case "cmn-Hans-CN":
-                        case "cmn-Hans-HK":
-                            //LANGUAGE.DST = "zh-Hans";
-                            LANGUAGE.DST = "zh-CN";
-                            break;
-                    }
+                if (spinner_dst_languages != null && spinner_dst_languages.getSelectedItem() != null) {
+                    LANGUAGE.DST_COUNTRY = spinner_dst_languages.getSelectedItem().toString();
+                    LANGUAGE.DST = map_dst_country.get(LANGUAGE.DST_COUNTRY);
+                    setText(textview_dst, LANGUAGE.DST);
                 }
-                setText(textview_dst_dialect, LANGUAGE.DST_DIALECT);
-                setText(textview_dst, LANGUAGE.DST);
             }
         });
 
@@ -757,7 +940,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < supportedLanguages.size(); i++) {
             String displayName = supportedLanguages.get(i);
-            String dialectCode = countries_dialects.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
+            String dialectCode = src_countries_dialect.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
 
             if (dialectCode != null) {
                 String languageCode = dialectCode.split("-")[0];
@@ -778,7 +961,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < supportedLanguages.size(); i++) {
             String displayName = supportedLanguages.get(i);
-            String dialectCode = countries_dialects.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
+            String dialectCode = src_countries_dialect.get(displayName); // Menghasilkan "id-ID", "id", atau "en-US"
 
             if (dialectCode != null) {
                 if (dialectCode.equalsIgnoreCase(targetDialectCode)) {
@@ -825,10 +1008,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setup_spinner(ArrayList<String> supported_languages) {
-        countries_dialects = new HashMap<>();
+    public void setup_src_spinner(ArrayList<String> supported_languages) {
+        src_countries_dialect = new HashMap<>();
         for (int i = 0; i < supported_languages.size(); i++) {
-            countries_dialects.put(supported_languages.get(i), dialects[i]);
+            src_countries_dialect.put(supported_languages.get(i), src_dialects[i]);
         }
 
         Collections.sort(supported_languages);
@@ -837,12 +1020,17 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(R.layout.spinner_textview_align);
 
         spinner_src_languages.setAdapter(adapter);
-        spinner_dst_languages.setAdapter(adapter);
 
         //spinner_src_languages.setSelection(getSpinnerIndexByCode(supported_languages, "id"));
-        //spinner_dst_languages.setSelection(getSpinnerIndexByCode(supported_languages, "en"));
         spinner_src_languages.setSelection(getSpinnerIndexByDialectCode(supported_languages, "id-ID"));
-        spinner_dst_languages.setSelection(getSpinnerIndexByDialectCode(supported_languages, "en-US"));
+    }
+
+    public void setup_dst_spinner(ArrayList<String> supported_languages) {
+        Collections.sort(supported_languages);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_textview_align, supported_languages);
+        adapter.setDropDownViewResource(R.layout.spinner_textview_align);
+        spinner_dst_languages.setAdapter(adapter);
+        spinner_dst_languages.setSelection(supported_languages.indexOf("English"));
     }
 
     // Google dialect tag conversion -> ML Kit code (one place only)
@@ -886,9 +1074,9 @@ public class MainActivity extends AppCompatActivity {
             tagList.add(tag);
         }
 
-        dialects = tagList.toArray(new String[0]);
-        countries = names.toArray(new String[0]);
-        setup_spinner(names);
+        src_dialects = tagList.toArray(new String[0]);
+        src_countries = names.toArray(new String[0]);
+        setup_src_spinner(names);
     }
 
     private String friendlyName(String rawTag) {

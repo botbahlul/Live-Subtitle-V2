@@ -457,9 +457,9 @@ public class MainActivity extends AppCompatActivity {
         DISPLAY_METRIC.DISPLAY_DENSITY = d;
 
         RECOGNIZING_STATUS.IS_RECOGNIZING = false;
-        MIC_BUTTON_STATUS.IS_OVERLAYING = false;
         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
-        setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+        textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
+        MIC_BUTTON_STATUS.IS_OVERLAYING = false;
         MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
         textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
 
@@ -691,7 +691,6 @@ public class MainActivity extends AppCompatActivity {
                 stop_voice_recognizer();
                 stop_create_overlay_translation_text();
                 stop_create_overlay_mic_button();
-
                 if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
                     if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
                         if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
@@ -703,7 +702,6 @@ public class MainActivity extends AppCompatActivity {
                     if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setBackgroundColor(Color.parseColor("#80000000"));
                     start_create_overlay_translation_text();
                 }
-
                 RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                 setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
                 MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
@@ -765,6 +763,25 @@ public class MainActivity extends AppCompatActivity {
                 }
                 voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
                 full_voice_text.setHeight((int) (h * getResources().getDisplayMetrics().density));
+
+                stop_voice_recognizer();
+                stop_create_overlay_translation_text();
+                stop_create_overlay_mic_button();
+                if (MIC_BUTTON_STATUS.IS_OVERLAYING) {
+                    if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
+                        if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_off);
+                    } else {
+                        start_voice_recognizer();
+                        if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setImageResource(R.drawable.ic_mic_black_on);
+                    }
+                    start_create_overlay_mic_button();
+                    if (create_overlay_mic_button.mic_button != null) create_overlay_mic_button.mic_button.setBackgroundColor(Color.parseColor("#80000000"));
+                    start_create_overlay_translation_text();
+                }
+                RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
+                setText(textview_recognizing, RECOGNIZING_STATUS.STRING);
+                MIC_BUTTON_STATUS.STRING =  "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
             }
 
             @Override

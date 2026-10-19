@@ -58,8 +58,8 @@ public class create_overlay_mic_button extends Service {
             MainActivity.full_voice_text.setText("");
             MainActivity.full_voice_text.setHint("Recognized sentences");
             //MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(MainActivity.audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
-            MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, MainActivity.mStreamVolume, 0);
             //MainActivity.audio.setStreamVolume(AudioManager.STREAM_MUSIC, (int)Double.parseDouble(String.valueOf((long)(MainActivity.audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2))), 0);
+            MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, MainActivity.mStreamVolume, 0);
             Log.d(TAG, "onDestroy: mStreamVolume = " + MainActivity.mStreamVolume);
             //Log.d(TAG, "onDestroy: mMusicVolume = " + MainActivity.mMusicVolume);
             if (create_overlay_translation_text.overlay_translation_text != null) {
@@ -115,8 +115,8 @@ public class create_overlay_mic_button extends Service {
                         RECOGNIZING_STATUS.IS_RECOGNIZING = !RECOGNIZING_STATUS.IS_RECOGNIZING;
                         RECOGNIZING_STATUS.STRING = "RECOGNIZING_STATUS.IS_RECOGNIZING = " + RECOGNIZING_STATUS.IS_RECOGNIZING;
                         MainActivity.textview_recognizing.setText(RECOGNIZING_STATUS.STRING);
-                        //MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
-                        //MainActivity.textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
+                        MIC_BUTTON_STATUS.STRING = "MIC_BUTTON_STATUS.IS_OVERLAYING = " + MIC_BUTTON_STATUS.IS_OVERLAYING;
+                        MainActivity.textview_overlaying.setText(MIC_BUTTON_STATUS.STRING);
                         MainActivity.textview_debug.setText("");
                         MainActivity.textview_output_messages.setText("");
                         if (!RECOGNIZING_STATUS.IS_RECOGNIZING) {
@@ -147,7 +147,12 @@ public class create_overlay_mic_button extends Service {
                             MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
                             start_voice_recognizer();
                             mic_button.setImageResource(R.drawable.ic_mic_black_on);
-                            if (TRANSLATION_TEXT.STRING.length() != 0) {
+                            if (TRANSLATION_TEXT.STRING.length() == 0) {
+                                if (create_overlay_translation_text.overlay_translation_text_container != null) {
+                                    create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
+                                    create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.INVISIBLE);
+                                }
+                            } else {
                                 if (create_overlay_translation_text.overlay_translation_text_container != null) {
                                     create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
                                     create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
@@ -167,12 +172,14 @@ public class create_overlay_mic_button extends Service {
                     public void onRemoveOverlay(View view, boolean isRemovedByUser) {
                         if (view == mic_button && isRemovedByUser) {
                             MIC_BUTTON_STATUS.IS_OVERLAYING = false;
+                            RECOGNIZING_STATUS.IS_RECOGNIZING = false;
                             //toast("onRemoveOverlay");
+                            stop_create_overlay_translation_text();
+                            stop_voice_recognizer();
                             stopSelf();
                         }
                     }
                 });
-
     }
 
     private void start_voice_recognizer() {

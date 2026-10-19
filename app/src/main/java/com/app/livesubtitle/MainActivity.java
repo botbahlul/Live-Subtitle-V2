@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
 import android.service.notification.NotificationListenerService;
 
 public class MainActivity extends AppCompatActivity {
-
+    private String TAG = "MainActivity";
     private CheckBox checkbox_debug_mode;
     private Spinner spinner_src_languages;
     private TextView textview_src_dialect;
@@ -85,27 +85,18 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> arraylist_dst_code = new ArrayList<>();
     Map<String, String> map_dst_country = new HashMap<>();
 
+    public static AudioManager audio;
+    public static int mStreamVolume;
+    //public static int mMusicVolume;
+
     private DisplayMetrics display;
     //DON'T FORGET TO MODIFY AndroidManifest.xml
     //         <activity
     //            android:name=".MainActivity"
     //            android:configChanges="keyboardHidden|screenSize|orientation|screenLayout|navigation"
 
-
-    @SuppressLint("StaticFieldLeak")
-    public static AudioManager audio;
-
-    private String TAG = "MainActivity";
-    public static int mStreamVolume;
-    //public static int mMusicVolume;
-
     private final String GOOGLE_SEARCH_PACKAGE = "com.google.android.googlequicksearchbox";
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
-
-    public boolean isNotificationServiceEnabled() {
-        String pkgName = getPackageName();
-        return NotificationManagerCompat.getEnabledListenerPackages(this).contains(pkgName);
-    }
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -118,6 +109,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    public boolean isNotificationServiceEnabled() {
+        String pkgName = getPackageName();
+        return NotificationManagerCompat.getEnabledListenerPackages(this).contains(pkgName);
+    }
+
 
     @SuppressLint({"ClickableViewAccessibility", "QueryPermissionsNeeded", "SetTextI18n"})
     @Override
@@ -136,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
         textview_dst = findViewById(R.id.textview_dst);
         full_voice_text = findViewById(R.id.full_voice_text);
         voice_text = findViewById(R.id.voice_text);
-
         textview_recognizing = findViewById(R.id.textview_recognizing);
         textview_overlaying = findViewById(R.id.textview_overlaying);
         textview_debug = findViewById(R.id.textview_debug);
@@ -431,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
         //audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         // 1. Save the original volume before shutting down (to be restored later)
         //mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION); //Volume of notification sound when we start SpeechRecognizer
-        //setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION); WRONG CODE?
+        //setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION); WRONG CODE? OR MUTE RINGTONE VOLUME?
         //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);         // set phone's ringtone volume to zero
 
         audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
@@ -441,11 +437,9 @@ public class MainActivity extends AppCompatActivity {
         //mMusicVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);  //Volume of any media being played when we start SpeechRecognizer
         Log.d(TAG, "onCreate: mStreamVolume = " + mStreamVolume);
         //Log.d(TAG, "onCreate: mMusicVolume = " + mMusicVolume);
-
         // 2. Mute the audio stream that triggers the "beep" sound.
         audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, 0);
         //audio.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
-
         // 3. Bind physical volume control buttons to voice calls (optional if using VoIP/Speech)
         //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
 
@@ -848,8 +842,8 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.voice_text.setHint("Recognized words");
                     MainActivity.full_voice_text.setText("");
                     MainActivity.full_voice_text.setHint("Recognized sentences");
-                    audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
-                    //audio.setStreamVolume(AudioManager.STREAM_MUSIC, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2))), 0);
+                    //audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, (int)Double.parseDouble(String.valueOf((long)(audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION) / 2))), 0);
+                    MainActivity.audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, MainActivity.mStreamVolume, 0);
                     if (create_overlay_translation_text.overlay_translation_text != null) {
                         setText(create_overlay_translation_text.overlay_translation_text, "");
                         create_overlay_translation_text.overlay_translation_text.setVisibility(View.INVISIBLE);
@@ -897,7 +891,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
         if (!MyNotificationListenerService.isEnabled(this)) {
             Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
             startActivity(i);
@@ -910,6 +903,42 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         handler.removeCallbacks(checkConnection);
         super.onPause();
+    }
+
+    private void start_create_overlay_mic_button() {
+        Intent i = new Intent(this, create_overlay_mic_button.class);
+        startService(i);
+    }
+
+    private void stop_create_overlay_mic_button() {
+        stopService(new Intent(this, create_overlay_mic_button.class));
+    }
+
+    private void start_create_overlay_translation_text() {
+        Intent i = new Intent(this, create_overlay_translation_text.class);
+        startService(i);
+    }
+
+    private void stop_create_overlay_translation_text() {
+        stopService(new Intent(this, create_overlay_translation_text.class));
+    }
+
+    private void start_voice_recognizer() {
+        Intent i = new Intent(this, VoiceRecognizer.class);
+        startService(i);
+    }
+
+    private void stop_voice_recognizer() {
+        stopService(new Intent(this, VoiceRecognizer.class));
+    }
+
+    private boolean isPackageInstalled(String packageName, PackageManager packageManager) {
+        try {
+            packageManager.getPackageInfo(packageName, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 
     private int getSpinnerIndexByCode(ArrayList<String> supportedLanguages, String targetCode) {
@@ -953,42 +982,6 @@ public class MainActivity extends AppCompatActivity {
         return 0;
     }
 
-    private void start_create_overlay_mic_button() {
-        Intent i = new Intent(this, create_overlay_mic_button.class);
-        startService(i);
-    }
-
-    private void stop_create_overlay_mic_button() {
-        stopService(new Intent(this, create_overlay_mic_button.class));
-    }
-
-    private void start_create_overlay_translation_text() {
-        Intent i = new Intent(this, create_overlay_translation_text.class);
-        startService(i);
-    }
-
-    private void stop_create_overlay_translation_text() {
-        stopService(new Intent(this, create_overlay_translation_text.class));
-    }
-
-    private void start_voice_recognizer() {
-        Intent i = new Intent(this, VoiceRecognizer.class);
-        startService(i);
-    }
-
-    private void stop_voice_recognizer() {
-        stopService(new Intent(this, VoiceRecognizer.class));
-    }
-
-    private boolean isPackageInstalled(String packageName, PackageManager packageManager) {
-        try {
-            packageManager.getPackageInfo(packageName, 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
-        }
-    }
-
     public void setup_src_spinner(ArrayList<String> supported_languages) {
         src_countries_dialects = new HashMap<>();
         for (int i = 0; i < supported_languages.size(); i++) {
@@ -1012,18 +1005,6 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(R.layout.spinner_textview_align);
         spinner_dst_languages.setAdapter(adapter);
         spinner_dst_languages.setSelection(supported_languages.indexOf("English"));
-    }
-
-    // Google dialect tag conversion -> ML Kit code (one place only)
-    public static String toMlKitCode(String dialect) {
-        if (dialect == null) return null;
-        String lang = dialect.split("-")[0].toLowerCase(Locale.ROOT);
-        switch (lang) {
-            case "cmn": case "yue": case "zh": return "zh";
-            case "fil": return "tl";
-            case "nb":  return "no";
-            default:    return lang;
-        }
     }
 
     private void loadLocaleLanguages() {

@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,7 +34,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
@@ -46,8 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import android.service.notification.NotificationListenerService;
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = "MainActivity";
@@ -87,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static AudioManager audio;
     public static int mStreamVolume;
-    //public static int mMusicVolume;
 
     private DisplayMetrics display;
     //DON'T FORGET TO MODIFY AndroidManifest.xml
@@ -99,21 +94,6 @@ public class MainActivity extends AppCompatActivity {
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_GET_LANGUAGE_DETAILS);
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-
-    private final Runnable checkConnection = new Runnable() {
-        @Override
-        public void run() {
-            if (!MyNotificationListenerService.isConnected) {
-                Log.w("MainActivity", "Listener belum connected, forceRebind()");
-                MyNotificationListenerService.forceRebind(MainActivity.this);
-            }
-        }
-    };
-
-    public boolean isNotificationServiceEnabled() {
-        String pkgName = getPackageName();
-        return NotificationManagerCompat.getEnabledListenerPackages(this).contains(pkgName);
-    }
 
 
     @SuppressLint({"ClickableViewAccessibility", "QueryPermissionsNeeded", "SetTextI18n"})
@@ -424,12 +404,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-        // 1. Save the original volume before shutting down (to be restored later)
-        //mStreamVolume = audio.getStreamVolume(AudioManager.STREAM_NOTIFICATION); //Volume of notification sound when we start SpeechRecognizer
-        //setVolumeControlStream(AudioManager.MODE_IN_COMMUNICATION); WRONG CODE? OR MUTE RINGTONE VOLUME?
-        //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);         // set phone's ringtone volume to zero
-
         audio = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         audio.setSpeakerphoneOn(true);
         // 1. Save the original volume before shutting down (to be restored later)
@@ -479,11 +453,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
-        }
-
-        if (!isNotificationServiceEnabled()) {
-            Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
-            startActivity(i);
         }
 
         Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
@@ -891,17 +860,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!MyNotificationListenerService.isEnabled(this)) {
-            Intent i = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
-            startActivity(i);
-        }
-        handler.removeCallbacks(checkConnection);
-        handler.postDelayed(checkConnection, 1500);
     }
 
     @Override
     protected void onPause() {
-        handler.removeCallbacks(checkConnection);
         super.onPause();
     }
 
@@ -1054,42 +1016,6 @@ public class MainActivity extends AppCompatActivity {
                 return "Chinese Cantonese (Hong Kong)";
         }
         return Locale.forLanguageTag(tag).getDisplayName(Locale.ENGLISH).trim();
-    }
-
-    public static boolean isNotificationListenerEnabled(Context context) {
-        String flat = Settings.Secure.getString(
-                context.getContentResolver(), "enabled_notification_listeners");
-        if (flat == null || flat.isEmpty()) return false;
-
-        for (String name : flat.split(":")) {
-            ComponentName cn = ComponentName.unflattenFromString(name);
-            if (cn != null && cn.getPackageName().equals(context.getPackageName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static void requestRebind(Context context) {
-        if (!isNotificationListenerEnabled(context)) return;
-
-        ComponentName cn = new ComponentName(context, MyNotificationListenerService.class);
-        // API 24+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            NotificationListenerService.requestRebind(cn);
-        }
-    }
-
-    public static void toggleNotificationListenerService(Context context) {
-        PackageManager pm = context.getPackageManager();
-        ComponentName cn = new ComponentName(context, MyNotificationListenerService.class);
-
-        pm.setComponentEnabledSetting(cn,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP);
-        pm.setComponentEnabledSetting(cn,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP);
     }
 
     public void setText(final TextView tv, final String text){

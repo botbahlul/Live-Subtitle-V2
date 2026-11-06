@@ -11,10 +11,6 @@ import android.os.Looper;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -34,7 +30,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -130,11 +125,6 @@ public class VoiceRecognizer extends Service {
                         //===============================
                     } else {
                         // startListening() REMOVED from here (it is already running)
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
                     }
                 }
 
@@ -193,11 +183,6 @@ public class VoiceRecognizer extends Service {
                             lastVoiceString = "";
                         }
                         // startListening() MOVED to onResults/onError
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
                     }
                 }
 
@@ -213,16 +198,9 @@ public class VoiceRecognizer extends Service {
                         } else {
                             setText(MainActivity.textview_debug, "onError : " + getErrorText(errorCode));
                         }
-
                         //======================================================
                         speechRecognizer.startListening(speechRecognizerIntent);
                         //======================================================
-
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
                     }
                 }
 
@@ -237,16 +215,9 @@ public class VoiceRecognizer extends Service {
                         return;
                     } else {
                         Log.d(TAG, "onResults: results = " + results);
-
                         //======================================================
                         speechRecognizer.startListening(speechRecognizerIntent);   // restart here
                         //======================================================
-
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (RECOGNIZING_STATUS.IS_RECOGNIZING) {
-                                MyNotificationListenerService.ensureOperaPlaying();
-                            }
-                        }, 200);
                     }
                 }
 
@@ -373,11 +344,9 @@ public class VoiceRecognizer extends Service {
                     create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
                 }
             }
-
             //======================================================
             speechRecognizer.startListening(speechRecognizerIntent);
             //======================================================
-
             timer = new Timer();
             timerTask = new TimerTask() {
                 @Override
@@ -629,30 +598,13 @@ public class VoiceRecognizer extends Service {
                             create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
                             create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
                             create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                            create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.parseColor("#80000000"));
                             create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
                             create_overlay_translation_text.overlay_translation_text.setHighlightColor(Color.TRANSPARENT);
                             create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
                             create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                             create_overlay_translation_text.overlay_translation_text.setTextColor(Color.parseColor("#FFFF00"));
                             //android.util.Log.d("SubtitleDebug", "textColor=" + Integer.toHexString(create_overlay_translation_text.overlay_translation_text.getCurrentTextColor()) + ", alpha=" + create_overlay_translation_text.overlay_translation_text.getAlpha() + ", layerType=" + create_overlay_translation_text.overlay_translation_text.getLayerType() + ", backgroundAlpha=" + (create_overlay_translation_text.overlay_translation_text.getBackground() != null ? create_overlay_translation_text.overlay_translation_text.getBackground().getAlpha() : -1));
-                            // 1. Makes Spannable
-                            Spannable spannableString = new SpannableStringBuilder(TRANSLATION_TEXT.STRING);
-                            // 2. Validate the index to ensure it does not exceed the text length (prevents crashes)
-                            int textLength = translatedLastVoiceString.length();
-                            int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-                            int safeEnd = Math.max(0, Math.min(selectionEnd, textLength)); // Safe from IndexOutOfBounds
-                            // 3. Apply Span using safeEnd
-                            spannableString.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFF00")),
-                                    0,
-                                    safeEnd,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // Use valid standard flags
-                            spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")),
-                                    0,
-                                    safeEnd,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                            create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                         }
                     } else {
                         if (create_overlay_translation_text.overlay_translation_text_container != null) {
@@ -725,30 +677,13 @@ public class VoiceRecognizer extends Service {
                                 create_overlay_translation_text.overlay_translation_text_container.setVisibility(View.VISIBLE);
                                 create_overlay_translation_text.overlay_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
                                 create_overlay_translation_text.overlay_translation_text.setVisibility(View.VISIBLE);
-                                create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                                create_overlay_translation_text.overlay_translation_text.setBackgroundColor(Color.parseColor("#80000000"));
                                 create_overlay_translation_text.overlay_translation_text.setTextIsSelectable(true);
                                 create_overlay_translation_text.overlay_translation_text.setHighlightColor(Color.TRANSPARENT);
                                 create_overlay_translation_text.overlay_translation_text.setText(TRANSLATION_TEXT.STRING);
                                 create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                                 create_overlay_translation_text.overlay_translation_text.setTextColor(Color.parseColor("#FFFF00"));
                                 //android.util.Log.d("SubtitleDebug", "textColor=" + Integer.toHexString(create_overlay_translation_text.overlay_translation_text.getCurrentTextColor()) + ", alpha=" + create_overlay_translation_text.overlay_translation_text.getAlpha() + ", layerType=" + create_overlay_translation_text.overlay_translation_text.getLayerType() + ", backgroundAlpha=" + (create_overlay_translation_text.overlay_translation_text.getBackground() != null ? create_overlay_translation_text.overlay_translation_text.getBackground().getAlpha() : -1));
-                                // 1. Makes Spannable
-                                Spannable spannableString = new SpannableStringBuilder(TRANSLATION_TEXT.STRING);
-                                // 2. Validate the index to ensure it does not exceed the text length (prevents crashes)
-                                int textLength = translatedLastVoiceString.length();
-                                int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-                                int safeEnd = Math.max(0, Math.min(selectionEnd, textLength)); // Aman dari IndexOutOfBounds
-                                // 3. Apply Span using safeEnd
-                                spannableString.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFF00")),
-                                        0,
-                                        safeEnd,
-                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // Gunakan flag standar yang valid
-                                spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")),
-                                        0,
-                                        safeEnd,
-                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                                create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                                create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                             }
                         } else {
                             if (create_overlay_translation_text.overlay_translation_text_container != null) {
@@ -840,29 +775,12 @@ public class VoiceRecognizer extends Service {
                             create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
                             create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
                             create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
-                            create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                            create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.parseColor("#80000000"));
                             create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
                             create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
                             appendText(create_overlay_translation_text.overlay_full_translation_text, "\n" + translatedLastVoiceString);
                             create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
                             create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
-                            // 1. Makes Spannable
-                            Spannable spannableString = new SpannableStringBuilder(translatedLastVoiceString);
-                            // 2. Validate the index to ensure it does not exceed the text length (prevents crashes)
-                            int textLength = translatedLastVoiceString.length();
-                            int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-                            int safeEnd = Math.max(0, Math.min(selectionEnd, textLength)); // Safe from IndexOutOfBounds
-                            // 3. Apply Span using safeEnd
-                            spannableString.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFF00")),
-                                    0,
-                                    safeEnd,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // Use valid standard flags
-                            spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")),
-                                    0,
-                                    safeEnd,
-                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                            create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                             create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
                         }
 
@@ -937,29 +855,12 @@ public class VoiceRecognizer extends Service {
                                 create_overlay_translation_text.overlay_full_translation_text_container.setVisibility(View.VISIBLE);
                                 create_overlay_translation_text.overlay_full_translation_text_container.setBackgroundColor(Color.parseColor("#80000000"));
                                 create_overlay_translation_text.overlay_full_translation_text.setVisibility(View.VISIBLE);
-                                create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.TRANSPARENT);
+                                create_overlay_translation_text.overlay_full_translation_text.setBackgroundColor(Color.parseColor("#80000000"));
                                 create_overlay_translation_text.overlay_full_translation_text.setTextIsSelectable(true);
                                 create_overlay_translation_text.overlay_full_translation_text.setHighlightColor(Color.TRANSPARENT);
                                 appendText(create_overlay_translation_text.overlay_full_translation_text, "\n" + translatedLastVoiceString);
                                 create_overlay_translation_text.overlay_full_translation_text.setSelection(create_overlay_translation_text.overlay_full_translation_text.getText().length());
                                 create_overlay_translation_text.overlay_full_translation_text.setTextColor(Color.parseColor("#FF00FFFF"));
-                                // 1. Makes Spannable
-                                Spannable spannableString = new SpannableStringBuilder(translatedLastVoiceString);
-                                // 2. Validate the index to ensure it does not exceed the text length (prevents crashes)
-                                int textLength = translatedLastVoiceString.length();
-                                int selectionEnd = create_overlay_translation_text.overlay_translation_text.getSelectionEnd();
-                                int safeEnd = Math.max(0, Math.min(selectionEnd, textLength)); // Safe from IndexOutOfBounds
-                                // 3. Apply Span using safeEnd
-                                spannableString.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFF00")),
-                                        0,
-                                        safeEnd,
-                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE); // Use valid standard flags
-                                spannableString.setSpan(new BackgroundColorSpan(Color.parseColor("#80000000")),
-                                        0,
-                                        safeEnd,
-                                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                                create_overlay_translation_text.overlay_translation_text.setText(spannableString);
-                                create_overlay_translation_text.overlay_translation_text.setSelection(create_overlay_translation_text.overlay_translation_text.getText().length());
                                 create_overlay_translation_text.overlay_full_translation_text.setGravity(Gravity.BOTTOM);
                             }
                         } else {
